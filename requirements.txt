@@ -23,3 +23,6 @@ Pillow>=10.0.0
 # Utilities
 numpy>=1.24.0
 sse-starlette
+certifi>=2024.0.0
+python-certifi-win32>=1.6.1
+truststore>=0.10.0

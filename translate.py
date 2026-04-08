@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import re
+import unicodedata
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from pdf2image import convert_from_bytes
@@ -71,6 +72,7 @@ text_tokenizer = None
 device = None
 FONTS = {}
 MODEL_LOAD_ERROR = None
+POPLLER_PATH = None
 
 
 def load_env_file(env_path: Optional[str] = None) -> None:
@@ -205,7 +207,7 @@ def translate_text_batch_with_azure(texts: List[str], source_lang: str, target_l
     for text in texts:
         messages = [{"role": "user", "content": text}]
         output = call_azure_openai_chat(messages, system_prompt, model="gpt-4o", max_tokens=1200)
-        translated.append(output.strip())
+        translated.append(unicodedata.normalize("NFC", output.strip()))
 
     return translated
 
@@ -242,6 +244,25 @@ class TimeoutException(Exception):
 
 def timeout_handler(signum, frame):
     raise TimeoutException("Operation timed out")
+
+
+def find_poppler_path() -> Optional[str]:
+    """Find Poppler bin directory, preferring workspace-local installations."""
+    cwd = os.getcwd()
+    candidates = [
+        os.path.join(cwd, 'poppler', 'Library', 'bin'),
+        os.path.join(cwd, 'poppler', 'bin'),
+    ]
+    candidates.extend(glob.glob(os.path.join(cwd, 'poppler-*', 'Library', 'bin')))
+    candidates.extend(glob.glob(os.path.join(cwd, 'poppler-*', 'bin')))
+
+    for path in candidates:
+        if os.path.isdir(path) and os.path.exists(os.path.join(path, 'pdfinfo.exe')):
+            print(f"Using Poppler from: {path}")
+            return path
+
+    print("Poppler binary not found in workspace-local folders.")
+    return None
 
 def extract_form_structure_optimized(pdf_path: str, max_pages: int = 50) -> Dict:
     """
@@ -515,7 +536,7 @@ def create_translated_form_pdf_optimized(
                 try:
                     bbox = block['bbox']
                     rect = fitz.Rect(bbox)
-                    translated_text = block['translated']
+                    translated_text = unicodedata.normalize("NFC", block['translated'])
                     
                     original_font_size = block.get('font_size', 12)
                     font_color = block.get('font_color', (0, 0, 0))
@@ -586,7 +607,10 @@ def process_scanned_form_optimized(pdf_path: str, dpi: int = 150, max_pages: int
     
     try:
         # Use lower DPI for memory efficiency
-        images = convert_from_bytes(pdf_bytes, dpi=dpi)
+        convert_kwargs = {'dpi': dpi}
+        if POPLLER_PATH:
+            convert_kwargs['poppler_path'] = POPLLER_PATH
+        images = convert_from_bytes(pdf_bytes, **convert_kwargs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF to image conversion failed: {e}")
     
@@ -673,8 +697,18 @@ def get_language_token_id(tokenizer, lang_code: str) -> int:
 def find_fonts():
     """Find Noto fonts on the system"""
     fonts_dict = {}
+    cwd = os.getcwd()
+    script_dirs = []
+
+    try:
+        for entry in os.scandir(cwd):
+            if entry.is_dir() and entry.name.lower().startswith(('noto_', 'tiro_', 'hind_', 'fonts', 'font')):
+                script_dirs.append(entry.path)
+    except Exception:
+        pass
     
     search_paths = [
+        cwd,
         'C:\\Windows\\Fonts',
         os.path.expanduser('~\\AppData\\Local\\Microsoft\\Windows\\Fonts'),
         '/usr/share/fonts/truetype/noto',
@@ -686,20 +720,25 @@ def find_fonts():
         '../fonts',
         os.path.join(os.getcwd(), 'fonts'),
     ]
+    search_paths.extend(script_dirs)
     
     print("Searching for fonts...")
     for path in search_paths:
         path = os.path.expanduser(path)
         if os.path.exists(path):
-            patterns = ['**/Noto*.ttf', '**/noto*.ttf', 'Noto*.ttf', 'noto*.ttf']
+            patterns = [
+                '**/Noto*.ttf', '**/noto*.ttf', 'Noto*.ttf', 'noto*.ttf',
+                '**/Hind*.ttf', '**/hind*.ttf', '**/Tiro*.ttf', '**/tiro*.ttf',
+                '**/*.otf'
+            ]
             for pattern in patterns:
                 found_fonts = glob.glob(os.path.join(path, pattern), recursive=True)
                 for font in found_fonts:
                     font_name = os.path.basename(font).lower()
-                    if 'devanagari' in font_name and 'devanagari' not in fonts_dict:
+                    if ('devanagari' in font_name or 'tirodevanagari' in font_name) and 'devanagari' not in fonts_dict:
                         fonts_dict['devanagari'] = font
                         print(f"  ✓ Devanagari: {font}")
-                    elif 'bengali' in font_name and 'bengali' not in fonts_dict:
+                    elif ('bengali' in font_name or 'siliguri' in font_name) and 'bengali' not in fonts_dict:
                         fonts_dict['bengali'] = font
                         print(f"  ✓ Bengali: {font}")
                     elif 'tamil' in font_name and 'tamil' not in fonts_dict:
@@ -717,7 +756,13 @@ def find_fonts():
                     elif 'malayalam' in font_name and 'malayalam' not in fonts_dict:
                         fonts_dict['malayalam'] = font
                         print(f"  ✓ Malayalam: {font}")
+                    elif ('oriya' in font_name or 'odia' in font_name) and 'oriya' not in fonts_dict:
+                        fonts_dict['oriya'] = font
+                        print(f"  ✓ Oriya/Odia: {font}")
                     elif 'notosans' in font_name and 'regular' in font_name and 'default' not in fonts_dict:
+                        fonts_dict['default'] = font
+                        print(f"  ✓ Default: {font}")
+                    elif ('hind' in font_name or 'tiro' in font_name) and 'default' not in fonts_dict:
                         fonts_dict['default'] = font
                         print(f"  ✓ Default: {font}")
     
@@ -725,7 +770,7 @@ def find_fonts():
 
 def load_models():
     """Load translation models on startup"""
-    global text_model, text_tokenizer, device, FONTS
+    global text_model, text_tokenizer, device, FONTS, POPLLER_PATH
 
     # Avoid HF Xet streaming issues on some Windows setups.
     os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
@@ -733,6 +778,7 @@ def load_models():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
     
+    POPLLER_PATH = find_poppler_path()
     FONTS = find_fonts()
     
     print("\nLoading text translation model (NLLB-200)...")
@@ -806,6 +852,8 @@ def get_font_for_language(target_lang: str) -> str:
         return FONTS.get('kannada', FONTS.get('default'))
     elif 'malayalam' in lang_lower:
         return FONTS.get('malayalam', FONTS.get('default'))
+    elif any(x in lang_lower for x in ['odia', 'oriya']):
+        return FONTS.get('oriya', FONTS.get('default'))
     return FONTS.get('default')
 
 def translate_text_batch(texts: List[str], source_lang: str, target_lang: str) -> List[str]:
@@ -837,7 +885,7 @@ def translate_text_batch(texts: List[str], source_lang: str, target_lang: str) -
     processed_translations = []
     for original, translated in zip(texts, translations):
         processed = apply_translation_rules(original, translated, tgt_code)
-        processed_translations.append(processed)
+        processed_translations.append(unicodedata.normalize("NFC", processed))
     
     return processed_translations
 
@@ -1007,7 +1055,7 @@ def create_translated_pdf_proper(
             
             bbox = block['bbox']
             rect = fitz.Rect(bbox)
-            translated_text = block['translated']
+            translated_text = unicodedata.normalize("NFC", block['translated'])
             
             # USE ORIGINAL FONT PROPERTIES
             original_font_size = block.get('font_size', 12)
@@ -1161,7 +1209,10 @@ async def translate_pdf(
         if is_scanned:
             await log("Converting to images for OCR...")
             pdf_bytes = open(input_path, 'rb').read()
-            images = convert_from_bytes(pdf_bytes, dpi=dpi)
+            convert_kwargs = {'dpi': dpi}
+            if POPLLER_PATH:
+                convert_kwargs['poppler_path'] = POPLLER_PATH
+            images = convert_from_bytes(pdf_bytes, **convert_kwargs)
             
             for page_idx, image in enumerate(images):
                 await log(f"Page {page_idx + 1}/{len(images)}: OCR...")
@@ -1372,6 +1423,7 @@ async def health_check():
         "model_loaded": text_model is not None,
         "model_load_error": MODEL_LOAD_ERROR,
         "fonts_available": list(FONTS.keys()),
+        "poppler_path": POPLLER_PATH,
         "device": str(device) if device else "not initialized"
     }
 
