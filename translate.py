@@ -1385,7 +1385,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 @router.post("/translate-pdf/")
 async def translate_pdf(
     file: UploadFile = File(...),
-    source_lang: str = Form(...),
+    source_lang: str = Form("English"),
     target_lang: str = Form(...),
     dpi: int = Form(200),
     client_id: str = Form(None)

@@ -631,9 +631,7 @@ function resolveBackendUrl(path) {
   catch { return `${LOCAL_BACKEND_ORIGIN}${path}`; }
 }
 const API_BASE = resolveBackendUrl("/api/chat");
-const MODEL = "gpt-4o";
 const TRANSLATION_API_BASE = resolveBackendUrl("/translate-pdf/");
-const TRANSLATION_SOURCE_LANG = "English";
 
 // ═══════════════════════════════════════════════════════
 //  PII MASKING
@@ -1070,7 +1068,6 @@ async function runTranslation() {
 async function callTranslationApi(file, targetLang) {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('source_lang', TRANSLATION_SOURCE_LANG);
   formData.append('target_lang', targetLang);
   formData.append('client_id', currentChatId || '');
   const resp = await fetch(TRANSLATION_API_BASE, { method:'POST', body:formData });
@@ -1287,7 +1284,7 @@ async function callAPIStream(messages, system, onChunk, attachments = [], mode =
   try {
     resp = await fetch(API_BASE, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model:MODEL, max_tokens:2000, system, messages, attachments, mode, stream:false })
+      body:JSON.stringify({ max_tokens:2000, system, messages, attachments, mode, stream:false })
     });
   } catch (error) {
     throw new Error(`Unable to reach the local backend at ${API_BASE}. Start the FastAPI server first.`);
@@ -1306,7 +1303,7 @@ async function callAPI(messages, system, attachments = [], mode = 'generic') {
   try {
     resp = await fetch(API_BASE, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model:MODEL, max_tokens:2000, system, messages, attachments, mode })
+      body:JSON.stringify({ max_tokens:2000, system, messages, attachments, mode })
     });
   } catch (error) {
     throw new Error(`Unable to reach the local backend at ${API_BASE}. Start the FastAPI server first.`);
