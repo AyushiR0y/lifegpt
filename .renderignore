@@ -1,0 +1,21 @@
+# Files to exclude from Render deployment
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv
+env/
+.DS_Store
+*.egg-info/
+dist/
+build/
+.vscode/
+.idea/
+*.log
+.env
+node_modules/
+.pytest_cache/

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: lifegpt
+    env: python
+    plan: free
+    region: oregon
+    runtime: python-3.10
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn translate:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.10
+    staticFilePath: "."
+    routes:
+      - path: /
+        endpoints:
+          - GET /
+      - path: /logo.jpg
+        endpoints:
+          - GET /logo.jpg
