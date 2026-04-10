@@ -10,6 +10,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.10
+      - key: LIFEGPT_LOAD_LOCAL_MODELS
+        value: "false"
     staticFilePath: "."
     routes:
       - path: /

@@ -21,8 +21,27 @@ app.add_middleware(
 app.include_router(translate.router)
 
 
+def should_load_local_models() -> bool:
+    """Decide whether to load large local translation models at startup.
+
+    Override with LIFEGPT_LOAD_LOCAL_MODELS=true/false.
+    On Render, default to False to avoid OOM on free tier.
+    """
+    override = os.getenv("LIFEGPT_LOAD_LOCAL_MODELS")
+    if override is not None:
+        return override.strip().lower() in {"1", "true", "yes", "on"}
+
+    on_render = os.getenv("RENDER", "").strip().lower() in {"1", "true", "yes", "on"}
+    return not on_render
+
+
 @app.on_event("startup")
 async def startup_event():
+    if not should_load_local_models():
+        translate.MODEL_LOAD_ERROR = "Local model loading skipped by configuration"
+        print("Skipping local translation model load (using Azure fallback).")
+        return
+
     try:
         translate.load_models()
         translate.MODEL_LOAD_ERROR = None
