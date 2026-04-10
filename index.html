@@ -55,11 +55,10 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    transition: width 0.25s ease;
+    transition: width 0.25s ease, min-width 0.25s ease;
     overflow: hidden;
     z-index: 10;
   }
-
   #sidebar.collapsed { width: 0; min-width: 0; }
 
   .sidebar-header {
@@ -69,36 +68,24 @@
     align-items: center;
     gap: 10px;
   }
-
   .logo-icon {
     width: 34px; height: 34px;
     background: var(--primary);
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    color: white;
-    font-size: 16px;
-    flex-shrink: 0;
+    color: white; font-size: 16px; flex-shrink: 0;
   }
-
   .logo-text {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--primary);
-    letter-spacing: -0.3px;
-    white-space: nowrap;
+    font-size: 17px; font-weight: 600; color: var(--primary);
+    letter-spacing: -0.3px; white-space: nowrap;
   }
 
   .new-chat-btn {
     margin: 12px 12px 4px;
     padding: 9px 14px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 500;
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px; cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
     display: flex; align-items: center; gap: 8px;
     transition: background 0.15s;
   }
@@ -106,12 +93,8 @@
 
   .sidebar-section-label {
     padding: 14px 16px 6px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    white-space: nowrap;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap;
   }
 
   .chat-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
@@ -120,266 +103,150 @@
   .chat-list::-webkit-scrollbar-thumb { background: var(--sidebar-border); border-radius: 4px; }
 
   .chat-item {
-    padding: 9px 10px;
-    border-radius: 8px;
-    cursor: pointer;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
     display: flex; align-items: center; gap: 8px;
-    color: var(--text-secondary);
-    font-size: 13px;
-    transition: background 0.12s;
-    white-space: nowrap;
-    overflow: hidden;
+    color: var(--text-secondary); font-size: 13px;
+    transition: background 0.12s; white-space: nowrap; overflow: hidden;
   }
   .chat-item:hover { background: var(--primary-pale); color: var(--primary); }
   .chat-item.active { background: var(--primary-pale); color: var(--primary); font-weight: 500; }
   .chat-item i { font-size: 12px; flex-shrink: 0; color: var(--text-muted); }
   .chat-item.active i { color: var(--primary); }
-  .chat-item-title { overflow: hidden; text-overflow: ellipsis; }
+  .chat-item-title { overflow: hidden; text-overflow: ellipsis; flex: 1; }
 
-  .chat-item-actions {
-    margin-left: auto;
-    display: none;
-    gap: 4px;
+  /* streaming badge on sidebar item */
+  .chat-item .streaming-badge {
+    font-size: 10px;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 8px;
+    padding: 1px 6px;
     flex-shrink: 0;
+    animation: pulse-badge 1.5s ease infinite;
   }
+  @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  .chat-item-actions { margin-left: auto; display: none; gap: 4px; flex-shrink: 0; }
   .chat-item:hover .chat-item-actions { display: flex; }
   .chat-item-actions button {
     background: none; border: none; cursor: pointer;
-    color: var(--text-muted); padding: 2px 4px; border-radius: 4px;
-    font-size: 11px;
+    color: var(--text-muted); padding: 2px 4px; border-radius: 4px; font-size: 11px;
     transition: color 0.12s;
   }
   .chat-item-actions button:hover { color: #ef4444; }
 
   .sidebar-footer {
-    padding: 12px 16px;
-    border-top: 1px solid var(--sidebar-border);
-    font-size: 11px;
-    color: var(--text-muted);
-    text-align: center;
+    padding: 12px 16px; border-top: 1px solid var(--sidebar-border);
+    font-size: 11px; color: var(--text-muted); text-align: center;
   }
 
   /* ── MAIN ── */
-  #main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--bg);
-  }
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 
   /* ── TOPBAR ── */
   #topbar {
-    height: 56px;
-    min-height: 56px;
+    height: 56px; min-height: 56px;
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center;
-    padding: 0 16px;
-    gap: 10px;
-    background: var(--bg);
-    z-index: 5;
+    padding: 0 16px; gap: 6px;
+    background: var(--bg); z-index: 5;
   }
-
   #toggle-sidebar {
     background: none; border: none; cursor: pointer;
     color: var(--text-secondary); font-size: 16px;
     width: 32px; height: 32px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 6px;
-    transition: background 0.12s;
+    border-radius: 6px; transition: background 0.12s;
   }
   #toggle-sidebar:hover { background: var(--surface); }
-
-  .topbar-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    flex: 1;
-  }
-
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text-primary); flex: 1; }
   .mode-badge {
     display: flex; align-items: center; gap: 6px;
     padding: 5px 11px;
-    background: var(--primary-pale);
-    border: 1px solid rgba(0,94,172,0.2);
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--primary);
+    background: var(--primary-pale); border: 1px solid rgba(0,94,172,0.2);
+    border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--primary);
   }
   .mode-badge i { font-size: 11px; }
 
-  /* ── MODULE SELECTOR ── */
-  #module-bar {
-    padding: 10px 16px;
-    display: flex; gap: 6px; flex-wrap: wrap;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
+  /* streaming indicator in topbar */
+  .stream-indicator {
+    display: none;
+    align-items: center; gap: 6px;
+    padding: 5px 11px;
+    background: #fef3c7; border: 1px solid #fbbf24;
+    border-radius: 20px; font-size: 12px; font-weight: 500; color: #92400e;
   }
+  .stream-indicator.visible { display: flex; }
+  .stream-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; animation: pulse-badge 1s ease infinite; }
 
+  .topbar-logo {
+    width: 96px; height: 44px; border-radius: 8px; overflow: hidden;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: #ffffff; border: none; margin-left: 0;
+  }
+  .topbar-logo img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+  .topbar-logo-fallback { color: var(--primary); font-size: 15px; font-weight: 700; letter-spacing: -0.5px; }
+
+  /* ── MODULE BAR ── */
+  #module-bar {
+    padding: 10px 16px; display: flex; gap: 6px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border); background: var(--bg);
+  }
   .module-btn {
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1.5px solid var(--border);
-    background: white;
-    color: var(--text-secondary);
-    font-family: var(--font);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 5px;
-    transition: all 0.15s;
-    white-space: nowrap;
+    padding: 6px 12px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: white;
+    color: var(--text-secondary); font-family: var(--font); font-size: 12px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    transition: all 0.15s; white-space: nowrap;
   }
-  .module-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--primary-pale);
-  }
-  .module-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-  }
+  .module-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-pale); }
+  .module-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
   .module-btn i { font-size: 11px; }
 
   /* ── CHAT AREA ── */
-  #chat-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px 0;
-    scroll-behavior: smooth;
-  }
+  #chat-area { flex: 1; overflow-y: auto; padding: 24px 0; scroll-behavior: smooth; }
   #chat-area::-webkit-scrollbar { width: 6px; }
   #chat-area::-webkit-scrollbar-track { background: transparent; }
   #chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
   .chat-inner {
-    max-width: 760px;
-    margin: 0 auto;
+    max-width: 760px; margin: 0 auto;
     padding: 0 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    display: flex; flex-direction: column; gap: 24px;
   }
 
   /* ── WELCOME ── */
-  #welcome-screen {
-    max-width: 640px;
-    margin: 40px auto 0;
-    padding: 0 24px;
-    text-align: center;
-  }
-
+  #welcome-screen { max-width: 980px; margin: 8px auto 0; padding: 0 16px; text-align: center; }
   .welcome-logo {
-    width: 72px; height: 72px;
+    width: 58px; height: 58px;
     background: linear-gradient(135deg, var(--primary), var(--primary-lighter));
-    border-radius: 18px;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 20px;
-    box-shadow: 0 8px 32px rgba(0,94,172,0.25);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 10px; box-shadow: 0 6px 24px rgba(0,94,172,0.22);
   }
-  .welcome-logo i { color: white; font-size: 30px; }
-
-  .welcome-title {
-    font-size: 26px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-    letter-spacing: -0.5px;
-  }
-
-  .welcome-sub {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 32px;
-  }
-
-  .welcome-modules {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 24px;
-    text-align: left;
-  }
-
+  .welcome-logo i { color: white; font-size: 24px; }
+  .welcome-title { font-size: 22px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.4px; }
+  .welcome-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.45; margin-bottom: 14px; }
+  .welcome-modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; text-align: left; }
   .welcome-module-card {
-    padding: 14px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.15s;
-    background: white;
+    padding: 11px; border: 1.5px solid var(--border);
+    border-radius: var(--radius); cursor: pointer;
+    transition: all 0.15s; background: white;
   }
-  .welcome-module-card:hover {
-    border-color: var(--primary);
-    background: var(--primary-ultra-pale);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .wmc-icon {
-    width: 32px; height: 32px;
-    background: var(--primary-pale);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 8px;
-    color: var(--primary);
-    font-size: 13px;
-  }
-
-  .wmc-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-  }
-
-  .wmc-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1.4;
-  }
+  .welcome-module-card:hover { border-color: var(--primary); background: var(--primary-ultra-pale); box-shadow: var(--shadow-sm); }
+  .wmc-icon { width: 28px; height: 28px; background: var(--primary-pale); border-radius: 7px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; color: var(--primary); font-size: 12px; }
+  .wmc-title { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wmc-desc { font-size: 10px; color: var(--text-muted); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ── MESSAGES ── */
   .message { display: flex; gap: 12px; align-items: flex-start; }
   .message.user { flex-direction: row-reverse; }
+  .avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .avatar.ai { background: var(--primary); color: white; }
+  .avatar.user { background: #1f2937; color: white; }
 
-  .avatar {
-    width: 32px; height: 32px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .avatar.ai {
-    background: var(--primary);
-    color: white;
-  }
-  .avatar.user {
-    background: #1f2937;
-    color: white;
-  }
-
-  .bubble {
-    max-width: 82%;
-    padding: 12px 16px;
-    border-radius: 14px;
-    line-height: 1.65;
-    font-size: 14px;
-  }
-
-  .message.user .bubble {
-    background: var(--user-bubble);
-    color: white;
-    border-bottom-right-radius: 4px;
-  }
-
-  .message.ai .bubble {
-    background: var(--ai-bubble);
-    color: var(--text-primary);
-    border-bottom-left-radius: 4px;
-    border: 1px solid rgba(0,94,172,0.1);
-  }
+  .bubble { max-width: 82%; padding: 12px 16px; border-radius: 14px; line-height: 1.65; font-size: 14px; }
+  .message.user .bubble { background: var(--user-bubble); color: white; border-bottom-right-radius: 4px; }
+  .message.ai .bubble { background: var(--ai-bubble); color: var(--text-primary); border-bottom-left-radius: 4px; border: 1px solid rgba(0,94,172,0.1); }
 
   .bubble p { margin-bottom: 8px; }
   .bubble p:last-child { margin-bottom: 0; }
@@ -397,56 +264,53 @@
   .bubble td { border: 1px solid var(--border); padding: 7px 12px; }
   .bubble tr:nth-child(even) td { background: var(--primary-ultra-pale); }
 
-  .msg-meta {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 4px;
+  .bubble-attachments { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .bubble-attachment {
     display: flex; align-items: center; gap: 6px;
+    padding: 5px 10px; background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.35); border-radius: 20px;
+    font-size: 11px; color: white; max-width: 200px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .message.user .msg-meta { justify-content: flex-end; }
+  .bubble-attachment i { flex-shrink: 0; }
 
-  .mode-tag {
-    background: rgba(0,94,172,0.1);
-    color: var(--primary);
-    padding: 1px 7px;
-    border-radius: 10px;
-    font-size: 10px;
+  .msg-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+  .message.user .msg-meta { justify-content: flex-end; }
+  .mode-tag { background: rgba(0,94,172,0.1); color: var(--primary); padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .msg-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .message.user .msg-actions { justify-content: flex-end; }
+  .message.ai .msg-actions { justify-content: flex-start; }
+  .msg-action-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 0;
+    font: inherit;
+    font-size: 11px;
     font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
   }
+  .msg-action-btn:hover { color: var(--primary); }
+  .msg-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* ── TYPING INDICATOR ── */
-  .typing-indicator {
-    display: flex; gap: 5px; align-items: center;
-    padding: 14px 16px;
-  }
-  .typing-dot {
-    width: 7px; height: 7px;
-    background: var(--primary-lighter);
-    border-radius: 50%;
-    animation: typing 1.2s ease-in-out infinite;
-  }
+  .typing-indicator { display: flex; gap: 5px; align-items: center; padding: 14px 16px; }
+  .typing-dot { width: 7px; height: 7px; background: var(--primary-lighter); border-radius: 50%; animation: typing 1.2s ease-in-out infinite; }
   .typing-dot:nth-child(2) { animation-delay: 0.2s; }
   .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typing {
-    0%,80%,100% { transform: translateY(0); opacity: 0.5; }
-    40% { transform: translateY(-6px); opacity: 1; }
-  }
+  @keyframes typing { 0%,80%,100%{transform:translateY(0);opacity:.5} 40%{transform:translateY(-6px);opacity:1} }
 
   /* ── INPUT AREA ── */
-  #input-area {
-    border-top: 1px solid var(--border);
-    padding: 12px 16px 16px;
-    background: var(--bg);
-  }
+  #input-area { border-top: 1px solid var(--border); padding: 12px 16px 16px; background: var(--bg); }
+  .input-inner { max-width: 760px; margin: 0 auto; }
 
-  .input-inner {
-    max-width: 760px;
-    margin: 0 auto;
-  }
-
-  /* File upload zone */
+  /* FIX: File zone — uses height/overflow animation, not display:none/opacity */
   #file-zone {
-    display: none;
+    overflow: hidden;
+    max-height: 120px;
     margin-bottom: 10px;
     padding: 10px;
     border: 2px dashed var(--primary-lighter);
@@ -456,282 +320,175 @@
     color: var(--primary);
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: max-height 0.35s ease, margin-bottom 0.35s ease, padding 0.35s ease, opacity 0.35s ease, border-width 0.35s ease;
+    opacity: 1;
   }
-  #file-zone.active { display: block; }
   #file-zone:hover { background: var(--primary-pale); }
   #file-zone i { font-size: 20px; margin-bottom: 4px; display: block; }
-
-  .file-chips {
-    display: flex; flex-wrap: wrap; gap: 6px;
-    margin-bottom: 8px;
-  }
-
-  .file-chip {
-    display: flex; align-items: center; gap: 6px;
-    padding: 4px 10px;
-    background: var(--primary-pale);
-    border: 1px solid rgba(0,94,172,0.2);
-    border-radius: 20px;
-    font-size: 12px;
-    color: var(--primary);
-  }
-  .file-chip button {
-    background: none; border: none; cursor: pointer;
-    color: var(--primary); font-size: 10px;
-    line-height: 1;
+  /* Collapsed state — zero height, zero margin/padding */
+  #file-zone.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    border-width: 0;
+    pointer-events: none;
   }
 
   /* Language selector (translate) */
-  #lang-selector {
-    display: none;
-    margin-bottom: 10px;
-    gap: 10px;
-    align-items: center;
-  }
+  #lang-selector { display: none; margin-bottom: 10px; gap: 10px; align-items: center; }
   #lang-selector.active { display: flex; }
-  #lang-selector select {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-family: var(--font);
-    font-size: 13px;
-    color: var(--text-primary);
-    background: white;
-    cursor: pointer;
-    outline: none;
-  }
+  #lang-selector select { flex: 1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 13px; color: var(--text-primary); background: white; cursor: pointer; outline: none; }
   #lang-selector select:focus { border-color: var(--primary); }
 
+  /* Inline file chips */
+  .input-file-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0 2px; }
+  .input-file-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 8px; background: var(--primary-pale);
+    border: 1px solid rgba(0,94,172,0.25); border-radius: 12px;
+    font-size: 11px; color: var(--primary); max-width: 160px; overflow: hidden;
+  }
+  .input-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .input-file-chip button { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 10px; line-height: 1; padding: 0; flex-shrink: 0; }
+
   .input-box {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 12px;
+    display: flex; gap: 10px; align-items: flex-end;
+    background: white; border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 10px 12px;
     box-shadow: var(--shadow-sm);
     transition: border-color 0.15s, box-shadow 0.15s;
+    flex-direction: column;
   }
-  .input-box:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0,94,172,0.08);
+  .input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,94,172,0.08); }
+
+  /* FIX: per-chat busy state — input box shows a "busy chat" notice instead of disabling globally */
+  .input-box.other-chat-busy {
+    border-color: #fbbf24;
+    background: #fffbeb;
   }
+  .other-chat-notice {
+    display: none;
+    font-size: 11px;
+    color: #92400e;
+    background: #fef3c7;
+    border-radius: 6px;
+    padding: 4px 10px;
+    align-items: center;
+    gap: 6px;
+  }
+  .other-chat-notice.visible { display: flex; }
+
+  .input-box-row { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
 
   #chat-input {
-    flex: 1;
-    border: none;
-    outline: none;
-    resize: none;
-    font-family: var(--font);
-    font-size: 14px;
-    line-height: 1.5;
-    max-height: 180px;
-    color: var(--text-primary);
-    background: transparent;
+    flex: 1; border: none; outline: none; resize: none;
+    font-family: var(--font); font-size: 14px; line-height: 1.5;
+    max-height: 180px; color: var(--text-primary); background: transparent;
   }
   #chat-input::placeholder { color: var(--text-muted); }
 
-  .input-actions {
-    display: flex; gap: 6px; align-items: flex-end;
-  }
-
+  .input-actions { display: flex; gap: 6px; align-items: flex-end; }
   .icon-btn {
-    width: 34px; height: 34px;
-    border-radius: 8px;
+    width: 34px; height: 34px; border-radius: 8px;
     border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    transition: all 0.15s;
-    background: var(--surface);
-    color: var(--text-secondary);
+    font-size: 14px; transition: all 0.15s;
+    background: var(--surface); color: var(--text-secondary);
   }
   .icon-btn:hover { background: var(--primary-pale); color: var(--primary); }
-
-  #send-btn {
-    background: var(--primary);
-    color: white;
-  }
+  #send-btn { background: var(--primary); color: white; }
   #send-btn:hover { background: var(--primary-light); }
   #send-btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
 
-  .input-footer {
-    text-align: center;
-    margin-top: 8px;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
+  .input-footer { text-align: center; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
 
   /* ── TRANSLATE PANEL ── */
   #translate-panel {
     display: none;
-    background: var(--primary-ultra-pale);
-    border: 1px solid rgba(0,94,172,0.15);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 10px;
-    text-align: center;
+    background: var(--primary-ultra-pale); border: 1px solid rgba(0,94,172,0.15);
+    border-radius: 12px; padding: 16px; margin-bottom: 10px; text-align: center;
   }
   #translate-panel.active { display: block; }
   #translate-panel h4 { color: var(--primary); margin-bottom: 4px; font-size: 14px; }
   #translate-panel p { color: var(--text-secondary); font-size: 12px; margin-bottom: 12px; }
 
-  #input-area.busy #file-zone,
-  #input-area.busy #translate-panel,
-  #input-area.busy .file-chips {
-    display: none !important;
+  .translate-upload-area {
+    border: 2px dashed var(--primary-lighter); border-radius: 10px; padding: 20px;
+    cursor: pointer; transition: all 0.15s; background: white; margin-bottom: 12px;
   }
+  .translate-upload-area:hover { background: var(--primary-pale); }
+  .translate-upload-area i { font-size: 24px; color: var(--primary); margin-bottom: 6px; }
+  .translate-upload-area p { font-size: 12px; color: var(--text-secondary); }
+
+  .translate-lang-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .translate-lang-row label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+  .translate-lang-row select { flex: 1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 13px; background: white; cursor: pointer; outline: none; }
+  .translate-lang-row select:focus { border-color: var(--primary); }
+
+  .translate-go-btn {
+    width: 100%; padding: 11px; background: var(--primary); color: white;
+    border: none; border-radius: 10px; font-family: var(--font); font-size: 14px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s;
+  }
+  .translate-go-btn:hover { background: var(--primary-light); }
+  .translate-go-btn:disabled { background: var(--border); cursor: not-allowed; }
 
   .translation-progress-log {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    background: rgba(0, 94, 172, 0.08);
-    border: 1px solid rgba(0, 94, 172, 0.2);
-    font-size: 12px;
-    max-height: 180px;
-    overflow-y: auto;
-    white-space: pre-line;
+    margin-top: 10px; padding: 10px; border-radius: 8px;
+    background: rgba(0,94,172,0.08); border: 1px solid rgba(0,94,172,0.2);
+    font-size: 12px; max-height: 180px; overflow-y: auto; white-space: pre-line;
+    text-align: left;
   }
 
-  /* ── SCROLLBAR ── */
+  .download-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 10px; padding: 10px 18px; background: #16a34a; color: white;
+    border-radius: 8px; font-size: 13px; font-weight: 500;
+    text-decoration: none; transition: background 0.15s;
+  }
+  .download-link:hover { background: #15803d; }
+
+  /* ── STREAMING CURSOR ── */
+  .streaming-cursor::after { content: '▋'; animation: blink 0.7s steps(1) infinite; color: var(--primary); font-size: 14px; }
+  @keyframes blink { 50%{opacity:0} }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
+  .modal { background: white; border-radius: 16px; padding: 28px; width: 360px; box-shadow: var(--shadow-md); animation: modal-in 0.2s ease; }
+  @keyframes modal-in { from{opacity:0;transform:translateY(12px) scale(0.97)} to{opacity:1;transform:none} }
+  .modal h3 { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+  .modal-options { display: flex; flex-direction: column; gap: 8px; }
+  .modal-opt { padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .modal-opt:hover { border-color: var(--primary); background: var(--primary-pale); }
+  .modal-opt-title { font-weight: 600; font-size: 13px; color: var(--text-primary); }
+  .modal-opt-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .modal-cancel { margin-top: 12px; width: 100%; padding: 9px; background: none; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--font); font-size: 13px; color: var(--text-secondary); transition: all 0.12s; }
+  .modal-cancel:hover { background: var(--surface); }
+
+  #file-input { display: none; }
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 
-  /* ── SUMMARY MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.35);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 100;
-    backdrop-filter: blur(2px);
+  @media (max-width: 980px) {
+    .welcome-modules { grid-template-columns: repeat(2, 1fr); }
   }
-  .modal {
-    background: white;
-    border-radius: 16px;
-    padding: 28px;
-    width: 360px;
-    box-shadow: var(--shadow-md);
-    animation: modal-in 0.2s ease;
-  }
-  @keyframes modal-in {
-    from { opacity: 0; transform: translateY(12px) scale(0.97); }
-    to { opacity: 1; transform: none; }
-  }
-  .modal h3 { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
-  .modal p { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
-  .modal-options { display: flex; flex-direction: column; gap: 8px; }
-  .modal-opt {
-    padding: 12px 16px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-align: left;
-  }
-  .modal-opt:hover { border-color: var(--primary); background: var(--primary-pale); }
-  .modal-opt-title { font-weight: 600; font-size: 13px; color: var(--text-primary); }
-  .modal-opt-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .modal-cancel {
-    margin-top: 12px; width: 100%;
-    padding: 9px;
-    background: none; border: 1px solid var(--border);
-    border-radius: 8px; cursor: pointer;
-    font-family: var(--font); font-size: 13px;
-    color: var(--text-secondary);
-    transition: all 0.12s;
-  }
-  .modal-cancel:hover { background: var(--surface); }
 
-  /* ── EMPTY STATE ── */
-  .empty-chat-msg {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-    font-size: 14px;
-  }
-  .empty-chat-msg i { font-size: 36px; margin-bottom: 10px; display: block; color: var(--border); }
-
-  /* ── RESPONSIVE ── */
   @media (max-width: 640px) {
     #sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 50; box-shadow: var(--shadow-md); }
     #sidebar.collapsed { transform: translateX(-100%); width: 260px; }
     .welcome-modules { grid-template-columns: 1fr; }
     .bubble { max-width: 94%; }
   }
-
-  /* ─── STREAMING CURSOR ─── */
-  .streaming-cursor::after {
-    content: '▋';
-    animation: blink 0.7s steps(1) infinite;
-    color: var(--primary);
-    font-size: 14px;
-  }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  /* ─── FILE UPLOAD DROP ─── */
-  #file-input { display: none; }
-
-  .translate-upload-area {
-    border: 2px dashed var(--primary-lighter);
-    border-radius: 10px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.15s;
-    background: white;
-    margin-bottom: 12px;
-  }
-  .translate-upload-area:hover { background: var(--primary-pale); }
-  .translate-upload-area i { font-size: 24px; color: var(--primary); margin-bottom: 6px; }
-  .translate-upload-area p { font-size: 12px; color: var(--text-secondary); }
-
-  .translate-lang-row {
-    display: flex; gap: 10px; align-items: center; margin-bottom: 14px;
-  }
-  .translate-lang-row label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
-  .translate-lang-row select {
-    flex: 1; padding: 8px 12px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-family: var(--font); font-size: 13px;
-    background: white; cursor: pointer; outline: none;
-  }
-  .translate-lang-row select:focus { border-color: var(--primary); }
-
-  .translate-go-btn {
-    width: 100%;
-    padding: 11px;
-    background: var(--primary);
-    color: white;
-    border: none; border-radius: 10px;
-    font-family: var(--font); font-size: 14px; font-weight: 500;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background 0.15s;
-  }
-  .translate-go-btn:hover { background: var(--primary-light); }
-  .translate-go-btn:disabled { background: var(--border); cursor: not-allowed; }
-
-  .download-link {
-    display: inline-flex; align-items: center; gap: 8px;
-    margin-top: 10px;
-    padding: 10px 18px;
-    background: #16a34a;
-    color: white;
-    border-radius: 8px;
-    font-size: 13px; font-weight: 500;
-    text-decoration: none;
-    transition: background 0.15s;
-  }
-  .download-link:hover { background: #15803d; }
 </style>
 </head>
 <body>
 
-<!-- ── SIDEBAR ── -->
 <aside id="sidebar">
   <div class="sidebar-header">
     <div class="logo-icon"><i class="fa-solid fa-shield-heart"></i></div>
@@ -742,91 +499,42 @@
   </button>
   <div class="sidebar-section-label">Recent</div>
   <div class="chat-list" id="chat-list"></div>
-  <div class="sidebar-footer">LifeGPT · Powered by GPT-4o</div>
+  <div class="sidebar-footer">LifeGPT · Enterprise Edition</div>
 </aside>
 
-<!-- ── MAIN ── -->
 <main id="main">
-  <!-- Topbar -->
   <div id="topbar">
     <button id="toggle-sidebar" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
     <span class="topbar-title">LifeGPT</span>
+    <!-- Per-chat streaming indicator -->
+    <div class="stream-indicator" id="stream-indicator">
+      <div class="stream-dot"></div>
+      <span id="stream-indicator-label">Processing…</span>
+    </div>
     <div class="mode-badge" id="active-mode-badge">
       <i class="fa-solid fa-comment-dots"></i>
       <span id="active-mode-label">Generic</span>
     </div>
-  </div>
-
-  <!-- Module bar -->
-  <div id="module-bar">
-    <button class="module-btn active" data-mode="generic" onclick="setMode('generic',this)">
-      <i class="fa-solid fa-comment-dots"></i> Generic
-    </button>
-    <button class="module-btn" data-mode="insurance" onclick="setMode('insurance',this)">
-      <i class="fa-solid fa-file-shield"></i> Insurance Insights
-    </button>
-    <button class="module-btn" data-mode="summarise" onclick="setMode('summarise',this)">
-      <i class="fa-solid fa-align-left"></i> Summarise
-    </button>
-    <button class="module-btn" data-mode="multidoc" onclick="setMode('multidoc',this)">
-      <i class="fa-solid fa-layer-group"></i> Multi-Doc Q&A
-    </button>
-    <button class="module-btn" data-mode="compare" onclick="setMode('compare',this)">
-      <i class="fa-solid fa-code-compare"></i> Compare Docs
-    </button>
-    <button class="module-btn" data-mode="numbers" onclick="setMode('numbers',this)">
-      <i class="fa-solid fa-calculator"></i> Number Accuracy
-    </button>
-    <button class="module-btn" data-mode="translate" onclick="setMode('translate',this)">
-      <i class="fa-solid fa-language"></i> Document Translation
-    </button>
-  </div>
-
-  <!-- Chat area -->
-  <div id="chat-area">
-    <div class="chat-inner" id="chat-inner">
-      <!-- Welcome screen -->
-      <div id="welcome-screen">
-        <div class="welcome-logo"><i class="fa-solid fa-shield-heart"></i></div>
-        <h1 class="welcome-title">Welcome to LifeGPT</h1>
-        <p class="welcome-sub">Your intelligent insurance and financial document assistant.<br/>Choose a module below or start typing.</p>
-        <div class="welcome-modules">
-          <div class="welcome-module-card" onclick="setMode('generic',null)">
-            <div class="wmc-icon"><i class="fa-solid fa-comment-dots"></i></div>
-            <div class="wmc-title">Generic</div>
-            <div class="wmc-desc">Professional questions on any industry topic</div>
-          </div>
-          <div class="welcome-module-card" onclick="setMode('insurance',null)">
-            <div class="wmc-icon"><i class="fa-solid fa-file-shield"></i></div>
-            <div class="wmc-title">Insurance Insights</div>
-            <div class="wmc-desc">Deep dive into life & general insurance</div>
-          </div>
-          <div class="welcome-module-card" onclick="setMode('summarise',null)">
-            <div class="wmc-icon"><i class="fa-solid fa-align-left"></i></div>
-            <div class="wmc-title">Summarise</div>
-            <div class="wmc-desc">Upload documents for concise summaries</div>
-          </div>
-          <div class="welcome-module-card" onclick="setMode('multidoc',null)">
-            <div class="wmc-icon"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="wmc-title">Multi-Doc Q&A</div>
-            <div class="wmc-desc">Ask questions across multiple documents</div>
-          </div>
-          <div class="welcome-module-card" onclick="setMode('compare',null)">
-            <div class="wmc-icon"><i class="fa-solid fa-code-compare"></i></div>
-            <div class="wmc-title">Compare Docs</div>
-            <div class="wmc-desc">Side-by-side comparison of 2+ documents</div>
-          </div>
-          <div class="welcome-module-card" onclick="setMode('numbers',null)">
-            <div class="wmc-icon"><i class="fa-solid fa-calculator"></i></div>
-            <div class="wmc-title">Number Accuracy</div>
-            <div class="wmc-desc">Precise extraction of figures & data</div>
-          </div>
-        </div>
-      </div>
+    <div class="topbar-logo" id="topbar-logo">
+      <img src="logo.jpg" alt="Logo" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex'" />
+      <span class="topbar-logo-fallback" id="logo-fallback" style="display:none">LG</span>
     </div>
   </div>
 
-  <!-- Input area -->
+  <div id="module-bar">
+    <button class="module-btn active" data-mode="generic" onclick="setMode('generic',this)"><i class="fa-solid fa-comment-dots"></i> Generic</button>
+    <button class="module-btn" data-mode="insurance" onclick="setMode('insurance',this)"><i class="fa-solid fa-file-shield"></i> Insurance Insights</button>
+    <button class="module-btn" data-mode="summarise" onclick="setMode('summarise',this)"><i class="fa-solid fa-align-left"></i> Summarise</button>
+    <button class="module-btn" data-mode="multidoc" onclick="setMode('multidoc',this)"><i class="fa-solid fa-layer-group"></i> Multi-Doc Q&A</button>
+    <button class="module-btn" data-mode="compare" onclick="setMode('compare',this)"><i class="fa-solid fa-code-compare"></i> Compare Docs</button>
+    <button class="module-btn" data-mode="numbers" onclick="setMode('numbers',this)"><i class="fa-solid fa-calculator"></i> Number Accuracy</button>
+    <button class="module-btn" data-mode="translate" onclick="setMode('translate',this)"><i class="fa-solid fa-language"></i> Document Translation</button>
+  </div>
+
+  <div id="chat-area">
+    <div class="chat-inner" id="chat-inner"></div>
+  </div>
+
   <div id="input-area">
     <div class="input-inner">
       <!-- Translate panel -->
@@ -860,55 +568,53 @@
           </select>
         </div>
         <button class="translate-go-btn" id="translate-go-btn" onclick="runTranslation()" disabled>
-          <i class="fa-solid fa-arrow-right-arrow-left"></i> Document Translation
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> Translate Document
         </button>
       </div>
 
-      <!-- File chips -->
-      <div class="file-chips" id="file-chips"></div>
-
-      <!-- File upload zone -->
-      <div id="file-zone" onclick="document.getElementById('file-input').click()">
-        <i class="fa-solid fa-paperclip"></i>
-        Drop files here or click to upload (PDF, DOCX, TXT — max 10MB each)
+      <!-- "other chat is busy" notice -->
+      <div class="other-chat-notice" id="other-chat-notice">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span id="other-chat-notice-text">Another chat is still processing. You can still type here — it will send immediately.</span>
       </div>
-      <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.txt,.csv" onchange="handleFiles(event)" />
 
-      <!-- Main input box -->
       <div class="input-box" id="main-input-box">
-        <button class="icon-btn" id="attach-btn" title="Attach files" onclick="document.getElementById('file-input').click()">
-          <i class="fa-solid fa-paperclip"></i>
-        </button>
-        <textarea id="chat-input" rows="1" placeholder="Ask anything…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <div class="input-actions">
-          <button class="icon-btn" id="send-btn" onclick="sendMessage()" title="Send">
-            <i class="fa-solid fa-arrow-up"></i>
+        <div class="input-file-chips" id="input-file-chips" style="display:none"></div>
+        <div class="input-box-row">
+          <button class="icon-btn" id="attach-btn" title="Attach files" onclick="document.getElementById('file-input').click()">
+            <i class="fa-solid fa-paperclip"></i>
           </button>
+          <textarea id="chat-input" rows="1" placeholder="Ask anything…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <div class="input-actions">
+            <button class="icon-btn" id="send-btn" onclick="sendMessage()" title="Send">
+              <i class="fa-solid fa-arrow-up"></i>
+            </button>
+          </div>
         </div>
       </div>
+
+      <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.xlsm,.png,.jpg,.jpeg,.webp,.gif" onchange="handleFiles(event)" />
+
+      <!-- FIX: file zone uses height-based collapse, not display:none -->
+      <div id="file-zone" onclick="document.getElementById('file-input').click()">
+        <i class="fa-solid fa-paperclip"></i>
+        Drop files here or click to upload (PDF, DOCX, TXT, images — max 10MB each)
+      </div>
+
       <div class="input-footer">LifeGPT can make mistakes. Verify important information independently.</div>
     </div>
   </div>
 </main>
 
-<!-- ── SUMMARY MODAL ── -->
+<!-- Summary modal -->
 <div class="modal-overlay" id="summary-modal" style="display:none">
   <div class="modal">
     <h3><i class="fa-solid fa-align-left" style="color:var(--primary);margin-right:8px"></i>Summary Depth</h3>
     <p>Choose how detailed you'd like the summary to be:</p>
     <div class="modal-options">
-      <div class="modal-opt" onclick="chooseSummaryDepth('concise')">
-        <div class="modal-opt-title">⚡ Concise</div>
-        <div class="modal-opt-desc">Key points only, 3–5 bullet points</div>
-      </div>
-      <div class="modal-opt" onclick="chooseSummaryDepth('mid')">
-        <div class="modal-opt-title">📋 Mid-Level</div>
-        <div class="modal-opt-desc">Balanced summary with main themes and details</div>
-      </div>
-      <div class="modal-opt" onclick="chooseSummaryDepth('detailed')">
-        <div class="modal-opt-title">📚 Detailed</div>
-        <div class="modal-opt-desc">Comprehensive breakdown of all sections</div>
-      </div>
+      <div class="modal-opt" onclick="chooseSummaryDepth('concise')"><div class="modal-opt-title">⚡ Concise</div><div class="modal-opt-desc">Key points only, 3–5 bullet points</div></div>
+      <div class="modal-opt" onclick="chooseSummaryDepth('mid')"><div class="modal-opt-title">📋 Mid-Level</div><div class="modal-opt-desc">Balanced summary with main themes and details</div></div>
+      <div class="modal-opt" onclick="chooseSummaryDepth('detailed')"><div class="modal-opt-title">📚 Detailed</div><div class="modal-opt-desc">Comprehensive breakdown of all sections</div></div>
     </div>
     <button class="modal-cancel" onclick="closeSummaryModal()">Cancel</button>
   </div>
@@ -916,23 +622,22 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  STATE
+//  ENTERPRISE CONFIG
 // ═══════════════════════════════════════════════════════
 const LOCAL_BACKEND_ORIGIN = "http://127.0.0.1:8000";
 function resolveBackendUrl(path) {
   if (window.location.protocol === 'file:') return `${LOCAL_BACKEND_ORIGIN}${path}`;
-  try {
-    return new URL(path, window.location.origin).toString();
-  } catch {
-    return `${LOCAL_BACKEND_ORIGIN}${path}`;
-  }
+  try { return new URL(path, window.location.origin).toString(); }
+  catch { return `${LOCAL_BACKEND_ORIGIN}${path}`; }
 }
-
 const API_BASE = resolveBackendUrl("/api/chat");
 const MODEL = "gpt-4o";
 const TRANSLATION_API_BASE = resolveBackendUrl("/translate-pdf/");
 const TRANSLATION_SOURCE_LANG = "English";
 
+// ═══════════════════════════════════════════════════════
+//  PII MASKING
+// ═══════════════════════════════════════════════════════
 const PII_PATTERNS = [
   { regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/gi, replacement: '[EMAIL]' },
   { regex: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN]' },
@@ -941,51 +646,107 @@ const PII_PATTERNS = [
   { regex: /\b(?:\d[ -]*?){13,19}\b/g, replacement: '[CARD_NUMBER]' },
   { regex: /(?<!\d)(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?){2,4}\d{3,4}(?!\d)/g, replacement: '[PHONE]' },
 ];
-
 function maskPiiText(text) {
   if (!text) return text;
   let masked = text;
-  for (const { regex, replacement } of PII_PATTERNS) {
-    masked = masked.replace(regex, replacement);
-  }
+  for (const { regex, replacement } of PII_PATTERNS) masked = masked.replace(regex, replacement);
   return masked;
 }
 
-let currentMode = 'generic';
-let currentChatId = null;
-let chats = {};          // { id: { title, mode, messages: [], files: [] } }
-let uploadedFiles = [];  // { name, content (base64 or text), type }
-let translateFile = null;
-let summaryPending = null; // pending user message waiting for depth choice
-let isStreaming = false;
-let isUiBusy = false;
-
+// ═══════════════════════════════════════════════════════
+//  MODES
+// ═══════════════════════════════════════════════════════
 const MODES = {
-  generic:   { label:'Generic',           icon:'fa-comment-dots',    fileUpload: false },
-  insurance: { label:'Insurance Insights',icon:'fa-file-shield',     fileUpload: false },
-  summarise: { label:'Summarise',         icon:'fa-align-left',      fileUpload: true  },
-  multidoc:  { label:'Multi-Doc Q&A',     icon:'fa-layer-group',     fileUpload: true  },
-  compare:   { label:'Compare Docs',      icon:'fa-code-compare',    fileUpload: true  },
-  numbers:   { label:'Number Accuracy',   icon:'fa-calculator',      fileUpload: true  },
-  translate: { label:'Document Translation', icon:'fa-language',     fileUpload: false },
+  generic:   { label:'Generic',              icon:'fa-comment-dots',  fileUpload:false },
+  insurance: { label:'Insurance Insights',   icon:'fa-file-shield',   fileUpload:false },
+  summarise: { label:'Summarise',            icon:'fa-align-left',    fileUpload:true  },
+  multidoc:  { label:'Multi-Doc Q&A',        icon:'fa-layer-group',   fileUpload:true  },
+  compare:   { label:'Compare Docs',         icon:'fa-code-compare',  fileUpload:true  },
+  numbers:   { label:'Number Accuracy',      icon:'fa-calculator',    fileUpload:true  },
+  translate: { label:'Document Translation', icon:'fa-language',      fileUpload:false },
 };
 
-// ── KEYWORD AUTO-ROUTING ──
 const KEYWORD_MAP = [
-  { mode: 'insurance',  keywords: ['policy','premium','claim','underwrite','actuary','life insurance','general insurance','health insurance','annuity','reinsurance','deductible','beneficiary','insurer','insured','coverage','mortality','morbidity','irdai','irda'] },
-  { mode: 'summarise',  keywords: ['summarise','summarize','summary','brief','brief me','overview','tldr','tl;dr','give me a summary','key points'] },
-  { mode: 'multidoc',   keywords: ['multiple documents','multi doc','across documents','from both','from all documents','these documents','compare documents'] },
-  { mode: 'compare',    keywords: ['compare','comparison','versus','vs ','differ','difference between','contrast','side by side'] },
-  { mode: 'numbers',    keywords: ['numbers','figures','statistics','amounts','percentage','crore','lakh','rupee','inr','₹','$','calculate','exact number','precise','accuracy'] },
-  { mode: 'translate',  keywords: ['translate','translation','hindi','marathi','french','spanish','german','language'] },
+  { mode:'insurance', keywords:['policy','premium','claim','underwrite','actuary','life insurance','general insurance','health insurance','annuity','reinsurance','deductible','beneficiary','insurer','insured','coverage','mortality','morbidity','irdai','irda'] },
+  { mode:'summarise', keywords:['summarise','summarize','summary','brief','overview','tldr','tl;dr','key points'] },
+  { mode:'multidoc',  keywords:['multiple documents','multi doc','across documents','from both','from all documents','these documents'] },
+  { mode:'compare',   keywords:['compare','comparison','versus','vs ','differ','difference between','contrast','side by side'] },
+  { mode:'numbers',   keywords:['numbers','figures','statistics','amounts','percentage','crore','lakh','rupee','inr','₹','$','calculate','exact number','precise','accuracy'] },
+  { mode:'translate', keywords:['translate','translation','hindi','marathi','french','spanish','german','language'] },
 ];
 
 function detectMode(text) {
   const lower = text.toLowerCase();
-  for (const { mode, keywords } of KEYWORD_MAP) {
-    if (keywords.some(k => lower.includes(k))) return mode;
-  }
+  for (const { mode, keywords } of KEYWORD_MAP) if (keywords.some(k => lower.includes(k))) return mode;
   return null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE — enterprise multi-chat
+//  Each chat can stream independently.
+//  streamingChats: Set of chatIds currently streaming.
+// ═══════════════════════════════════════════════════════
+let currentMode = 'generic';
+let currentChatId = null;
+let chats = {};           // { id: { title, mode, messages, files, started } }
+let uploadedFiles = [];   // files for current chat in input
+let translateFile = null;
+let summaryPending = null;
+let editMessageContext = null;
+const streamingChats = new Set(); // FIX: tracks which chats are streaming
+
+// ── FIX: file-zone collapse based on chat.started, not a boolean flag ──
+function isChatStarted(id) {
+  return !!(chats[id] && chats[id].started);
+}
+
+function markChatStarted(id) {
+  if (!chats[id]) return;
+  chats[id].started = true;
+  if (id === currentChatId) collapseFileZone();
+}
+
+function collapseFileZone() {
+  document.getElementById('file-zone').classList.add('collapsed');
+}
+
+function expandFileZone() {
+  document.getElementById('file-zone').classList.remove('collapsed');
+}
+
+// ── FIX: update input area based on per-chat streaming state ──
+function updateInputState() {
+  const thisChatStreaming = streamingChats.has(currentChatId);
+  const anyOtherStreaming = [...streamingChats].some(id => id !== currentChatId);
+  const sendBtn = document.getElementById('send-btn');
+  const chatInput = document.getElementById('chat-input');
+  const notice = document.getElementById('other-chat-notice');
+  const indicator = document.getElementById('stream-indicator');
+  const indicatorLabel = document.getElementById('stream-indicator-label');
+  const inputBox = document.getElementById('main-input-box');
+
+  // This chat is busy → disable send
+  sendBtn.disabled = thisChatStreaming;
+
+  // Other chat is busy → show notice but keep input enabled
+  if (anyOtherStreaming && !thisChatStreaming) {
+    notice.classList.add('visible');
+    inputBox.classList.add('other-chat-busy');
+  } else {
+    notice.classList.remove('visible');
+    inputBox.classList.remove('other-chat-busy');
+  }
+
+  // Topbar indicator
+  if (thisChatStreaming) {
+    indicator.classList.add('visible');
+    indicatorLabel.textContent = 'Processing…';
+  } else {
+    indicator.classList.remove('visible');
+  }
+
+  // Update sidebar badges
+  renderChatList();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -995,28 +756,48 @@ function generateId() { return 'chat_' + Date.now() + '_' + Math.random().toStri
 
 function newChat() {
   const id = generateId();
-  chats[id] = { title: 'New Chat', mode: currentMode, messages: [], files: [] };
+  chats[id] = { title:'New Chat', mode:currentMode, messages:[], files:[], started:false };
   currentChatId = id;
   uploadedFiles = [];
+  editMessageContext = null;
   renderChatList();
   renderChatMessages();
-  updateFileZone();
+  updateFileZoneForCurrentChat();
+  renderInputFileChips();
   saveChatStorage();
+  updateInputState();
+  updateEditingState();
 }
 
 function loadChat(id) {
   currentChatId = id;
   const chat = chats[id];
   uploadedFiles = chat.files || [];
+  editMessageContext = null;
   setModeInternal(chat.mode || 'generic');
   renderChatMessages();
-  updateFileZone();
-  renderFileChips();
+  updateFileZoneForCurrentChat();
+  renderInputFileChips();
   renderChatList();
+  updateInputState();
+  updateEditingState();
+}
+
+function updateFileZoneForCurrentChat() {
+  const needsFiles = MODES[currentMode]?.fileUpload;
+  if (needsFiles && !isChatStarted(currentChatId)) {
+    expandFileZone();
+  } else {
+    collapseFileZone();
+  }
 }
 
 function deleteChat(id, e) {
   e.stopPropagation();
+  if (streamingChats.has(id)) {
+    if (!confirm('This chat is still processing. Delete anyway?')) return;
+    streamingChats.delete(id);
+  }
   delete chats[id];
   if (currentChatId === id) {
     const remaining = Object.keys(chats);
@@ -1037,9 +818,11 @@ function renderChatList() {
     el.className = 'chat-item' + (id === currentChatId ? ' active' : '');
     el.onclick = () => loadChat(id);
     const modeInfo = MODES[chat.mode] || MODES.generic;
+    const streamBadge = streamingChats.has(id) ? '<span class="streaming-badge">●&nbsp;live</span>' : '';
     el.innerHTML = `
       <i class="fa-solid ${modeInfo.icon}"></i>
       <span class="chat-item-title">${escHtml(chat.title)}</span>
+      ${streamBadge}
       <div class="chat-item-actions">
         <button onclick="deleteChat('${id}',event)" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div>`;
@@ -1048,11 +831,10 @@ function renderChatList() {
 }
 
 function updateChatTitle(id, text) {
-  if (!chats[id]) return;
-  if (chats[id].title === 'New Chat') {
-    chats[id].title = text.slice(0, 38) + (text.length > 38 ? '…' : '');
-    renderChatList();
-  }
+  if (!chats[id] || chats[id].title !== 'New Chat') return;
+  chats[id].title = text.slice(0,38) + (text.length > 38 ? '…' : '');
+  renderChatList();
+  saveChatStorage();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1060,119 +842,33 @@ function updateChatTitle(id, text) {
 // ═══════════════════════════════════════════════════════
 function setMode(mode, btn) {
   setModeInternal(mode);
-  if (currentChatId && chats[currentChatId]) {
-    chats[currentChatId].mode = mode;
-  }
-  // Highlight button
-  document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
-  const target = btn || document.querySelector(`[data-mode="${mode}"]`);
-  if (target) target.classList.add('active');
+  if (currentChatId && chats[currentChatId]) chats[currentChatId].mode = mode;
 }
-
 function setModeInternal(mode) {
   currentMode = mode;
   const info = MODES[mode] || MODES.generic;
   document.getElementById('active-mode-label').textContent = info.label;
   document.querySelector('#active-mode-badge i').className = `fa-solid ${info.icon}`;
-  // Highlight correct btn
-  document.querySelectorAll('.module-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.mode === mode);
-  });
-  updateFileZone();
-  // Show/hide translate panel
+  document.querySelectorAll('.module-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  updateFileZoneForCurrentChat();
   const tp = document.getElementById('translate-panel');
   const mib = document.getElementById('main-input-box');
+  const attachBtn = document.getElementById('attach-btn');
   if (mode === 'translate') {
     tp.classList.add('active');
     mib.style.display = 'none';
-    document.getElementById('attach-btn').style.display = 'none';
+    attachBtn.style.display = 'none';
   } else {
     tp.classList.remove('active');
     mib.style.display = 'flex';
-    document.getElementById('attach-btn').style.display = 'flex';
+    attachBtn.style.display = 'flex';
   }
   updatePlaceholder();
 }
-
 function updatePlaceholder() {
-  const placeholders = {
-    generic:   'Ask a professional question…',
-    insurance: 'Ask about life or general insurance…',
-    summarise: 'Upload a document and ask for a summary…',
-    multidoc:  'Upload documents then ask your question…',
-    compare:   'Upload 2+ documents to compare…',
-    numbers:   'Ask about specific numbers or figures in your document…',
-    translate: '',
-  };
+  const placeholders = { generic:'Ask a professional question…', insurance:'Ask about life or general insurance…', summarise:'Upload a document and ask for a summary…', multidoc:'Upload documents then ask your question…', compare:'Upload 2+ documents to compare…', numbers:'Ask about specific numbers or figures in your document…', translate:'' };
   const ta = document.getElementById('chat-input');
   if (ta) ta.placeholder = placeholders[currentMode] || 'Ask anything…';
-}
-
-function updateFileZone() {
-  const fz = document.getElementById('file-zone');
-  const needsFiles = MODES[currentMode]?.fileUpload;
-  fz.classList.toggle('active', needsFiles);
-  renderFileChips();
-}
-
-function setUiBusy(busy) {
-  isUiBusy = busy;
-  const inputArea = document.getElementById('input-area');
-  if (inputArea) inputArea.classList.toggle('busy', busy);
-
-  const sendBtn = document.getElementById('send-btn');
-  const attachBtn = document.getElementById('attach-btn');
-  const chatInput = document.getElementById('chat-input');
-  if (sendBtn) sendBtn.disabled = busy;
-  if (attachBtn) attachBtn.disabled = busy;
-  if (chatInput) chatInput.disabled = busy;
-}
-
-function getWsBaseUrl() {
-  const apiUrl = new URL(API_BASE);
-  const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${wsProtocol}//${apiUrl.host}`;
-}
-
-function connectTranslationProgress(clientId, onProgress) {
-  let ws = null;
-  try {
-    ws = new WebSocket(`${getWsBaseUrl()}/ws/${encodeURIComponent(clientId)}`);
-    ws.onmessage = (ev) => {
-      if (typeof ev.data === 'string') onProgress(ev.data);
-    };
-  } catch (_) {
-    return { close: () => {} };
-  }
-
-  return {
-    close: () => {
-      try { ws.close(); } catch (_) {}
-    }
-  };
-}
-
-function appendProgressLog(bubbleEl, progressLines) {
-  const logHtml = progressLines.slice(-12).map(line => escHtml(line)).join('\n');
-  bubbleEl.innerHTML = `<em>Translation in progress...</em><div class="translation-progress-log">${logHtml}</div>`;
-}
-
-function downloadHtml(download) {
-  if (!download) return '';
-  const href = download.dataUrl || download.url || '';
-  if (!href) return '';
-  const label = download.label || 'Download Translation';
-  const name = download.filename || 'translation_output';
-  return `<br/><a class="download-link" href="${href}" download="${escHtml(name)}"><i class="fa-solid fa-download"></i> ${escHtml(label)}</a>`;
-}
-
-async function blobToDataUrl(blob) {
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1187,14 +883,13 @@ async function handleFiles(event) {
     uploadedFiles.push({ name: f.name, content, type: f.type });
   }
   if (currentChatId && chats[currentChatId]) chats[currentChatId].files = uploadedFiles;
-  renderFileChips();
+  renderInputFileChips();
   event.target.value = '';
 }
-
 function readFileContent(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
-    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf') || (file.type || '').startsWith('image/') || file.name.toLowerCase().match(/\.(xlsx?|xlsm|png|jpe?g|webp|gif|bmp|tif|tiff)$/)) {
       reader.onload = e => resolve({ raw: e.target.result, isBase64: true });
       reader.readAsDataURL(file);
     } else {
@@ -1203,25 +898,28 @@ function readFileContent(file) {
     }
   });
 }
-
 function removeFile(idx) {
   uploadedFiles.splice(idx, 1);
   if (currentChatId && chats[currentChatId]) chats[currentChatId].files = uploadedFiles;
-  renderFileChips();
+  renderInputFileChips();
 }
-
-function renderFileChips() {
-  const container = document.getElementById('file-chips');
+function renderInputFileChips() {
+  const container = document.getElementById('input-file-chips');
+  if (!container) return;
+  if (uploadedFiles.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  container.style.display = 'flex';
   container.innerHTML = '';
   uploadedFiles.forEach((f, i) => {
     const chip = document.createElement('div');
-    chip.className = 'file-chip';
-    chip.innerHTML = `<i class="fa-solid fa-file-lines"></i> ${escHtml(f.name)} <button onclick="removeFile(${i})"><i class="fa-solid fa-xmark"></i></button>`;
+    chip.className = 'input-file-chip';
+    chip.innerHTML = `<i class="fa-solid fa-file-lines"></i><span>${escHtml(f.name)}</span><button onclick="removeFile(${i})"><i class="fa-solid fa-xmark"></i></button>`;
     container.appendChild(chip);
   });
 }
 
-// ── TRANSLATE FILE ──
+// ═══════════════════════════════════════════════════════
+//  TRANSLATE
+// ═══════════════════════════════════════════════════════
 function handleTranslateFile(event) {
   const f = event.target.files[0];
   if (!f) return;
@@ -1235,108 +933,138 @@ async function runTranslation() {
   const lang = document.getElementById('translate-lang');
   const langName = lang.options[lang.selectedIndex].text;
   const langCode = lang.value;
-
   const btn = document.getElementById('translate-go-btn');
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Translating…';
-  setUiBusy(true);
 
-  // Show message in chat
   ensureCurrentChat();
-  addUserMessage(`Document Translation: "${translateFile.name}" to ${langName}`);
+  const thisChatId = currentChatId; // FIX: capture at start, so new-chat mid-flight doesn't break this
+
+  markChatStarted(thisChatId);
+  streamingChats.add(thisChatId);
+  updateInputState();
+
+  const ws = document.getElementById('welcome-screen');
+  if (ws) ws.remove();
+
+  addUserMessageWithFiles(
+    `Translate "${translateFile.name}" to ${langName}`,
+    [{ name: translateFile.name }],
+    thisChatId
+  );
+  if (chats[thisChatId]) {
+    chats[thisChatId].messages.push({
+      role: 'user',
+      content: `Translate "${translateFile.name}" to ${langName}`,
+      attachments: [{ name: translateFile.name }]
+    });
+    updateChatTitle(thisChatId, `Translation: ${translateFile.name}`);
+  }
+
+  // FIX: create the AI message element and store a stable reference keyed to chatId
+  // If the user switches chats, we still update the right element when we switch back
+  const aiMsgEl = addAiMessageForChat(thisChatId, '', currentMode);
+  const bubbleEl = aiMsgEl ? aiMsgEl.querySelector('.bubble') : null;
+  if (bubbleEl) {
+    bubbleEl.classList.add('streaming-cursor');
+    bubbleEl.innerHTML = `<em>Translating to ${escHtml(langName)}…</em>`;
+  }
+
+  // FIX: persist a "pending translation" record immediately so reload can show it
+  if (chats[thisChatId]) {
+    chats[thisChatId].messages.push({
+      role: 'assistant',
+      mode: currentMode,
+      content: `Translation to **${langName}** is in progress…`,
+      kind: 'translation_pending',
+      _pendingLang: langName
+    });
+    saveChatStorage();
+  }
 
   const isPdf = translateFile.type === 'application/pdf' || translateFile.name.toLowerCase().endsWith('.pdf');
-  let translatedFull = '';
-  const aiMsgEl = addAiMessage('', currentMode);
-  const bubbleEl = aiMsgEl.querySelector('.bubble');
-  bubbleEl.classList.add('streaming-cursor');
-  bubbleEl.innerHTML = `<em>Translating to ${langName}…</em>`;
-  const progressLines = [];
-  const progressConn = connectTranslationProgress(currentChatId, (line) => {
-    progressLines.push(line);
-    appendProgressLog(bubbleEl, progressLines);
-    scrollBottom();
-  });
 
   try {
+    let resultMsg;
     if (isPdf) {
-      bubbleEl.innerHTML = `<em>Uploading ${escHtml(translateFile.name)} to the translation service…</em>`;
+      if (bubbleEl) bubbleEl.innerHTML = `<em>Uploading ${escHtml(translateFile.name)} to the translation service…</em>`;
       const translatedBlob = await callTranslationApi(translateFile, langName);
       const url = URL.createObjectURL(translatedBlob);
       const filename = translateFile.name.replace(/\.[^.]+$/, '') + `_${langCode}.pdf`;
-
       let dataUrl = null;
-      if (translatedBlob.size <= 2 * 1024 * 1024) {
-        dataUrl = await blobToDataUrl(translatedBlob);
-      }
-
-      const msg = {
-        role:'assistant',
-        mode: currentMode,
+      if (translatedBlob.size <= 2 * 1024 * 1024) dataUrl = await blobToDataUrl(translatedBlob);
+      resultMsg = {
+        role:'assistant', mode: currentMode,
         content:`Translation complete! Your PDF has been translated to **${langName}**.`,
-        kind: 'translation_result',
-        download: {
-          filename,
-          label: 'Download Translated PDF',
-          url,
-          dataUrl,
-          mimeType: translatedBlob.type || 'application/pdf'
-        }
+        kind:'translation_result',
+        download:{ filename, label:'Download Translated PDF', url, dataUrl, mimeType: translatedBlob.type||'application/pdf' }
       };
-
-      bubbleEl.classList.remove('streaming-cursor');
-      bubbleEl.innerHTML = marked.parse(msg.content) + downloadHtml(msg.download);
-
-      chats[currentChatId].messages.push(msg);
     } else {
-      // Keep the existing text translation path for non-PDF files.
       const content = await readFileContent(translateFile);
-
       let textContent = maskPiiText(content.raw);
       const MAX_CHARS = 8000;
       const chunks = chunkText(textContent, MAX_CHARS);
-
+      let translatedFull = '';
       for (let i = 0; i < chunks.length; i++) {
+        if (bubbleEl) bubbleEl.innerHTML = `<em>Translating chunk ${i+1} of ${chunks.length} to ${escHtml(langName)}…</em>`;
         const prompt = maskPiiText(`You are a professional document translator. Translate the following text to ${langName} (language code: ${langCode}). Preserve formatting, structure, and meaning. Only output the translated text, nothing else.\n\n---\n${chunks[i]}`);
         const resp = await callAPI([{ role:'user', content: prompt }], buildTranslateSystem(langName));
         translatedFull += (i > 0 ? '\n\n' : '') + resp;
       }
-
       const blob = new Blob([translatedFull], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const filename = translateFile.name.replace(/\.[^.]+$/, '') + `_${langCode}.txt`;
       const dataUrl = await blobToDataUrl(blob);
-
-      const msg = {
-        role:'assistant',
-        mode: currentMode,
+      resultMsg = {
+        role:'assistant', mode: currentMode,
         content:`Translation complete! Your document has been translated to **${langName}**.`,
-        kind: 'translation_result',
-        download: {
-          filename,
-          label: 'Download Translation',
-          url,
-          dataUrl,
-          mimeType: 'text/plain'
-        }
+        kind:'translation_result',
+        download:{ filename, label:'Download Translation', url, dataUrl, mimeType:'text/plain' }
       };
-
-      bubbleEl.classList.remove('streaming-cursor');
-      bubbleEl.innerHTML = marked.parse(msg.content) + downloadHtml(msg.download);
-
-      chats[currentChatId].messages.push(msg);
     }
-    saveChatStorage();
-  } catch(e) {
-    bubbleEl.classList.remove('streaming-cursor');
-    bubbleEl.innerHTML = `<span style="color:#ef4444"><i class="fa-solid fa-triangle-exclamation"></i> Translation failed: ${e.message}</span>`;
-  } finally {
-    progressConn.close();
-    setUiBusy(false);
-  }
 
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fa-solid fa-arrow-right-arrow-left"></i> Document Translation';
+    // FIX: replace the pending message with the real result
+    if (chats[thisChatId]) {
+      const msgs = chats[thisChatId].messages;
+      const pendingIdx = msgs.findLastIndex(m => m.kind === 'translation_pending');
+      if (pendingIdx >= 0) msgs[pendingIdx] = resultMsg;
+      else msgs.push(resultMsg);
+      saveChatStorage();
+    }
+
+    // FIX: update bubble — even if user switched to another chat, update when they come back
+    if (bubbleEl) {
+      bubbleEl.classList.remove('streaming-cursor');
+      bubbleEl.innerHTML = marked.parse(resultMsg.content) + downloadHtml(resultMsg.download);
+    }
+    // If user is currently viewing this chat, re-render last message
+    if (currentChatId === thisChatId && !bubbleEl) {
+      renderChatMessages();
+    }
+
+  } catch(e) {
+    const errMsg = { role:'assistant', mode:currentMode, content:`**Translation failed:** ${e.message}`, kind:'translation_error' };
+    if (chats[thisChatId]) {
+      const msgs = chats[thisChatId].messages;
+      const pendingIdx = msgs.findLastIndex(m => m.kind === 'translation_pending');
+      if (pendingIdx >= 0) msgs[pendingIdx] = errMsg;
+      else msgs.push(errMsg);
+      saveChatStorage();
+    }
+    if (bubbleEl) {
+      bubbleEl.classList.remove('streaming-cursor');
+      bubbleEl.innerHTML = `<span style="color:#ef4444"><i class="fa-solid fa-triangle-exclamation"></i> Translation failed: ${escHtml(e.message)}</span>`;
+    }
+  } finally {
+    streamingChats.delete(thisChatId);
+    updateInputState();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-arrow-right-arrow-left"></i> Translate Document';
+    translateFile = null;
+    document.getElementById('translate-file-name').textContent = 'Click to upload a document (PDF, DOCX, TXT)';
+    document.getElementById('translate-file-input').value = '';
+    btn.disabled = true;
+  }
 }
 
 async function callTranslationApi(file, targetLang) {
@@ -1345,106 +1073,143 @@ async function callTranslationApi(file, targetLang) {
   formData.append('source_lang', TRANSLATION_SOURCE_LANG);
   formData.append('target_lang', targetLang);
   formData.append('client_id', currentChatId || '');
-
-  const resp = await fetch(TRANSLATION_API_BASE, {
-    method: 'POST',
-    body: formData,
-  });
-
+  const resp = await fetch(TRANSLATION_API_BASE, { method:'POST', body:formData });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.detail || err.error?.message || `Translation API error ${resp.status}`);
   }
-
   return await resp.blob();
 }
 
+async function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 // ═══════════════════════════════════════════════════════
-//  MESSAGING
+//  MESSAGING — FIX: per-chat streaming, no global lock
 // ═══════════════════════════════════════════════════════
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
-
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 180) + 'px';
 }
 
 async function sendMessage() {
-  if (isStreaming) return;
+  // FIX: only block if THIS chat is streaming, not any chat
+  if (streamingChats.has(currentChatId)) return;
   const ta = document.getElementById('chat-input');
   const text = ta.value.trim();
   if (!text) return;
-
-  // Auto-detect mode from keywords
-  const detected = detectMode(text);
-  if (detected && detected !== currentMode) {
-    setMode(detected, null);
-  }
-
+  const detected = currentMode === 'generic' ? detectMode(text) : null;
+  if (detected && detected !== currentMode) setMode(detected, null);
   ta.value = '';
   autoResize(ta);
-
   ensureCurrentChat();
-
-  // If summarise mode, ask for depth first
-  if (currentMode === 'summarise') {
-    summaryPending = text;
-    showSummaryModal();
+  if (currentMode === 'summarise') { summaryPending = text; showSummaryModal(); return; }
+  if (editMessageContext && editMessageContext.chatId === currentChatId) {
+    await resendEditedMessage(text);
     return;
   }
-
   await processMessage(text);
 }
 
 async function processMessage(text, summaryDepth = null) {
-  const chat = chats[currentChatId];
+  const chatId = currentChatId; // FIX: capture chat ID at start of async op
+  const chat = chats[chatId];
+  const modeAtSend = currentMode;
+  const messageIndex = chat ? chat.messages.length : 0;
 
-  // Remove welcome screen
   const ws = document.getElementById('welcome-screen');
   if (ws) ws.remove();
 
-  // Add user message
-  addUserMessage(text);
-  chat.messages.push({ role:'user', content: text });
-  updateChatTitle(currentChatId, text);
+  markChatStarted(chatId);
+  const filesAtSend = [...uploadedFiles];
+
+  addUserMessageWithFiles(text, filesAtSend, chatId, messageIndex);
+  chat.messages.push({ role:'user', content:text, attachments:filesAtSend.map(f=>({name:f.name})) });
+  updateChatTitle(chatId, text);
   saveChatStorage();
 
-  // Build system prompt
-  const systemPrompt = buildSystemPrompt(currentMode, summaryDepth);
+  uploadedFiles = [];
+  if (chat) chat.files = [];
+  renderInputFileChips();
 
-  // Build API messages
-  const apiMessages = buildApiMessages(chat, text, summaryDepth);
+  const systemPrompt = buildSystemPrompt(modeAtSend, summaryDepth);
+  const apiMessages = buildApiMessages(chat, text, summaryDepth, filesAtSend);
 
-  // Stream response
-  isStreaming = true;
-  setUiBusy(true);
+  streamingChats.add(chatId);
+  updateInputState();
 
-  const aiMsgEl = addAiMessage('', currentMode);
-  const bubbleEl = aiMsgEl.querySelector('.bubble');
-  bubbleEl.classList.add('streaming-cursor');
+  // FIX: add AI message bubble — may need to create in background chat (user switched)
+  const aiMsgEl = addAiMessageForChat(chatId, '', modeAtSend);
+  const bubbleEl = aiMsgEl ? aiMsgEl.querySelector('.bubble') : null;
+  const copyBtn = aiMsgEl ? aiMsgEl.querySelector('.copy-btn') : null;
+  if (bubbleEl) bubbleEl.classList.add('streaming-cursor');
 
   try {
     const fullResponse = await callAPIStream(apiMessages, systemPrompt, (chunk) => {
+      if (bubbleEl) {
+        bubbleEl.classList.remove('streaming-cursor');
+        bubbleEl.innerHTML = marked.parse(chunk);
+      }
+      // only scroll if user is watching this chat
+      if (currentChatId === chatId) scrollBottom();
+    }, filesAtSend, modeAtSend);
+
+    if (bubbleEl) {
       bubbleEl.classList.remove('streaming-cursor');
-      bubbleEl.innerHTML = marked.parse(chunk);
-    });
+      bubbleEl.innerHTML = marked.parse(fullResponse);
+    }
+    if (copyBtn) {
+      copyBtn.dataset.copyText = fullResponse;
+      copyBtn.disabled = false;
+    }
 
-    bubbleEl.classList.remove('streaming-cursor');
-    bubbleEl.innerHTML = marked.parse(fullResponse);
-
-    chat.messages.push({ role:'assistant', content: fullResponse, mode: currentMode });
+    chat.messages.push({ role:'assistant', content:fullResponse, mode:modeAtSend });
     saveChatStorage();
     hljs.highlightAll();
   } catch(e) {
-    bubbleEl.classList.remove('streaming-cursor');
-    bubbleEl.innerHTML = `<span style="color:#ef4444"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${e.message}</span>`;
+    if (bubbleEl) {
+      bubbleEl.classList.remove('streaming-cursor');
+      bubbleEl.innerHTML = `<span style="color:#ef4444"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escHtml(e.message)}</span>`;
+    }
   }
 
-  isStreaming = false;
-  setUiBusy(false);
-  scrollBottom();
+  streamingChats.delete(chatId);
+  updateInputState();
+  if (currentChatId === chatId) scrollBottom();
+}
+
+async function resendEditedMessage(text) {
+  const editContext = editMessageContext;
+  if (!editContext || editContext.chatId !== currentChatId) {
+    editMessageContext = null;
+    updateEditingState();
+    await processMessage(text);
+    return;
+  }
+
+  const chat = chats[currentChatId];
+  if (!chat || !chat.messages[editContext.index] || chat.messages[editContext.index].role !== 'user') {
+    editMessageContext = null;
+    updateEditingState();
+    await processMessage(text);
+    return;
+  }
+
+  chat.messages = chat.messages.slice(0, editContext.index);
+  saveChatStorage();
+  editMessageContext = null;
+  updateEditingState();
+  renderChatMessages();
+  await processMessage(text);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1452,11 +1217,9 @@ async function processMessage(text, summaryDepth = null) {
 // ═══════════════════════════════════════════════════════
 function showSummaryModal() { document.getElementById('summary-modal').style.display = 'flex'; }
 function closeSummaryModal() { document.getElementById('summary-modal').style.display = 'none'; summaryPending = null; }
-
 function chooseSummaryDepth(depth) {
   document.getElementById('summary-modal').style.display = 'none';
-  const text = summaryPending;
-  summaryPending = null;
+  const text = summaryPending; summaryPending = null;
   processMessage(text, depth);
 }
 
@@ -1464,88 +1227,19 @@ function chooseSummaryDepth(depth) {
 //  SYSTEM PROMPTS
 // ═══════════════════════════════════════════════════════
 function buildSystemPrompt(mode, summaryDepth) {
-  const OOS_BLOCK = `If the user asks anything non-professional, inappropriate, personal, or outside the scope of this assistant, respond with exactly this message (filling in the blanks):
-
-"This question appears to be outside the scope of LifeGPT. I am designed to assist with professional and insurance-related topics across the following modules:
-• **Generic** – Professional questions on finance, business, regulations, and industry topics
-• **Insurance Insights** – Life insurance, general insurance, actuarial, IRDAI regulations, claims, underwriting
-• **Summarise** – Summarising uploaded documents at varying detail levels
-• **Multi-Doc Q&A** – Answering questions across multiple uploaded documents
-• **Compare Docs** – Comparing 2 or more documents for differences and similarities
-• **Number Accuracy** – Precise extraction and verification of numerical data from documents
-• **Document Translation** – Translating documents into selected languages
-
-Please rephrase your question to relate to one of these areas."
-
-Do not engage with the out-of-scope topic in any way beyond this message. This rule applies in every module.`;
-
+  const OOS_BLOCK = `If the user asks anything non-professional, inappropriate, personal, or outside the scope of this assistant, respond with exactly this message:\n\nThis question appears to be outside the scope of LifeGPT. I am designed to assist with professional topics, including insurance, finance, business, technology, AI, and GenAI. Please rephrase your question to relate to one of those areas or to document analysis.\n\nDo not engage with the out-of-scope topic in any way beyond this message.`;
   const BASE = `You are LifeGPT, a highly professional AI assistant built for the insurance and financial services industry. You maintain a formal yet approachable tone. You always structure your responses clearly with appropriate headings and bullet points where relevant. ${OOS_BLOCK}`;
-
   const PROMPTS = {
-    generic: `${BASE}
-
-For the Generic module: Answer professional questions on finance, business, economics, regulations, technology, and industry topics. Keep responses thorough but concise. Always cite relevant industry standards or regulations where applicable.`,
-
-    insurance: `${BASE}
-
-You are now in Insurance Insights mode. You are an expert insurance analyst with deep knowledge of:
-- **Life Insurance**: Term, Whole Life, Endowment, ULIPs, Annuities, Riders, Mortality tables, Actuarial pricing, Sum Assured, Surrender Value, Paid-Up Value, Free Look Period
-- **General Insurance**: Motor, Health, Property, Marine, Liability, Crop, Travel insurance
-- **Regulatory Framework**: IRDAI (Insurance Regulatory and Development Authority of India) guidelines, IRDA Act 1999, Insurance Act 1938, solvency margins, reserving norms
-- **Technical Terms**: Premium calculation, underwriting, claims processing, reinsurance treaties, combined ratio, loss ratio, expense ratio
-- **Market Intelligence**: Indian insurance market dynamics, penetration rates, density, distribution channels (agents, brokers, bancassurance, direct), InsurTech trends
-
-Provide detailed, technically accurate responses with regulatory references, industry benchmarks, and practical insights. When discussing products, always mention key features, tax implications (Section 80C, 80D, 10(10D)), and suitability.`,
-
-    summarise: `${BASE}
-
-You are in Summarise mode. A document has been provided.
-${summaryDepth === 'concise' ? 'Provide a CONCISE summary: 3-5 bullet points covering only the most critical information. Be brief.' :
-  summaryDepth === 'mid' ? 'Provide a MID-LEVEL summary: Identify the main themes, key sections, and important findings. Use clear headings. 3-5 paragraphs.' :
-  summaryDepth === 'detailed' ? 'Provide a DETAILED summary: Comprehensively cover all sections, subsections, key arguments, data points, conclusions, and any notable information. Use structured headings and sub-headings. Be thorough.' :
-  'Ask the user whether they want a concise, mid-level, or detailed summary before proceeding.'}
-Always begin with a one-sentence overview of what the document is about.`,
-
-    multidoc: `${BASE}
-
-You are in Multi-Document Q&A mode. Multiple documents have been provided. When answering questions:
-1. Clearly identify which document(s) each piece of information comes from (cite as "Document 1:", "Document 2:", etc.)
-2. Synthesise information across documents where relevant
-3. If documents contain conflicting information, highlight the discrepancy
-4. Always provide precise page references or section references when available
-5. If the answer requires combining information from multiple documents, explicitly show how they connect
-For long documents, focus on the most relevant sections to the question asked.`,
-
-    compare: `${BASE}
-
-You are in Document Comparison mode. Two or more documents have been provided. Provide a thorough comparison that includes:
-1. **Executive Summary**: One paragraph on the key similarities and differences
-2. **Structured Comparison Table**: Side-by-side comparison of key attributes
-3. **Detailed Analysis**: Section-by-section comparison
-4. **Key Differences**: Bullet list of the most significant differences
-5. **Key Similarities**: Bullet list of major commonalities
-6. **Recommendation**: Which document/option may be preferable and why (if applicable)
-Always be objective and precise. Reference specific clauses, sections, or data points.`,
-
-    numbers: `${BASE}
-
-You are in Number Accuracy mode. This mode is specifically designed to extract, verify, and analyse numerical data from documents with ZERO hallucination. Follow these strict rules:
-1. **Only quote numbers that explicitly appear in the document** – never infer, estimate, or calculate unless asked
-2. **Always cite the exact location** of each number (page, section, paragraph, table)
-3. **Present numbers exactly as they appear** – preserve units, currencies, and formatting
-4. **Flag any ambiguities** – if a number appears inconsistent or unclear, say so explicitly
-5. **Cross-verify** – if the same figure appears multiple times, confirm they match
-6. **Do not round or approximate** – use exact figures
-7. If asked to calculate, show all workings step-by-step
-8. If you are uncertain about a number, say "I cannot confirm this figure – please verify directly in the source document at [location]"
-Structure your response with clear tables where multiple figures are involved.`,
-
+    generic:   `${BASE}\n\nAnswer professional questions on finance, business, economics, regulations, technology, AI, GenAI, and industry topics. Keep responses thorough but concise.`,
+    insurance: `${BASE}\n\nYou are an expert insurance analyst with deep knowledge of life insurance, general insurance, IRDAI regulations, actuarial pricing, claims, reinsurance, and Indian insurance market dynamics.`,
+    summarise: `${BASE}\n\nA document has been provided.\n${summaryDepth==='concise'?'Provide a CONCISE summary: 3-5 bullet points covering only the most critical information.':summaryDepth==='mid'?'Provide a MID-LEVEL summary: main themes, key sections, and important findings. Use clear headings.':summaryDepth==='detailed'?'Provide a DETAILED summary: comprehensively cover all sections, subsections, key arguments, data points, and conclusions.':'Ask the user whether they want a concise, mid-level, or detailed summary before proceeding.'}\nAlways begin with a one-sentence overview of what the document is about.`,
+    multidoc:  `${BASE}\n\nMultiple documents have been provided. Clearly identify which document each piece of information comes from. Synthesise across documents where relevant and highlight discrepancies.`,
+    compare:   `${BASE}\n\nCompare the uploaded documents using only facts that appear in the documents. Do not output placeholder text, bracketed templates, or example labels like [Product Name]. If a detail is not stated, write "Not stated". Start with an executive summary, then provide a structured comparison table, detailed analysis, key differences, key similarities, and a recommendation grounded in the evidence.`,
+    numbers:   `${BASE}\n\nOnly quote numbers that explicitly appear in the document. Always cite exact location. Present numbers exactly as they appear. Flag ambiguities. Do not round or approximate.`,
     translate: buildTranslateSystem('the target language'),
   };
-
   return PROMPTS[mode] || PROMPTS.generic;
 }
-
 function buildTranslateSystem(langName) {
   return `You are a professional document translator. Translate all provided text accurately and naturally to ${langName}. Preserve the original structure, formatting, paragraph breaks, and meaning. Do not add commentary. Output only the translated text.`;
 }
@@ -1553,136 +1247,102 @@ function buildTranslateSystem(langName) {
 // ═══════════════════════════════════════════════════════
 //  API MESSAGES BUILDER
 // ═══════════════════════════════════════════════════════
-function buildApiMessages(chat, currentText, summaryDepth) {
+function buildApiMessages(chat, currentText, summaryDepth, filesAtSend) {
   const messages = [];
-
-  // Include conversation history (last 10 exchanges to save tokens)
+  const files = filesAtSend || uploadedFiles;
   const history = (chat.messages || []).slice(-20);
   for (const msg of history) {
-    if (msg.role === 'user') {
-      messages.push({ role: 'user', content: maskPiiText(msg.content) });
-    } else if (msg.role === 'assistant') {
-      messages.push({ role: 'assistant', content: maskPiiText(msg.content) });
-    }
+    if (msg.role === 'user') messages.push({ role:'user', content:maskPiiText(msg.content) });
+    else if (msg.role === 'assistant') messages.push({ role:'assistant', content:maskPiiText(msg.content) });
   }
-
-  // Build the current user turn with files
-  if (uploadedFiles.length > 0) {
-    // Chunk file contents
+  if (files.length > 0) {
     let fileContext = '';
-    uploadedFiles.forEach((f, i) => {
-      const docNum = `Document ${i + 1} (${f.name})`;
+    files.forEach((f,i) => {
+      const docNum = `Document ${i+1} (${f.name})`;
       if (!f.content.isBase64) {
         const chunks = chunkText(maskPiiText(f.content.raw), 6000);
         fileContext += `\n\n=== ${docNum} ===\n${chunks[0]}`;
-        if (chunks.length > 1) fileContext += `\n[... ${chunks.length - 1} additional chunks available ...]`;
+        if (chunks.length > 1) fileContext += `\n[... ${chunks.length-1} additional chunks available ...]`;
       } else {
-        fileContext += `\n\n=== ${docNum} ===\n[PDF – binary content attached]`;
+        fileContext += `\n\n=== ${docNum} ===\n[Uploaded document attached for OCR/text extraction]`;
       }
     });
-
-    const userContent = maskPiiText(`${currentText}\n\n--- UPLOADED DOCUMENTS ---${fileContext}`);
-    messages.push({ role: 'user', content: userContent });
+    messages.push({ role:'user', content:maskPiiText(`${currentText}\n\n--- UPLOADED DOCUMENTS ---${fileContext}`) });
   } else {
-    messages.push({ role: 'user', content: maskPiiText(currentText) });
+    messages.push({ role:'user', content:maskPiiText(currentText) });
   }
-
   return messages;
 }
-
-// ═══════════════════════════════════════════════════════
-//  CHUNKING
-// ═══════════════════════════════════════════════════════
 function chunkText(text, maxChars) {
   const chunks = [];
-  for (let i = 0; i < text.length; i += maxChars) {
-    chunks.push(text.slice(i, i + maxChars));
-  }
+  for (let i=0; i<text.length; i+=maxChars) chunks.push(text.slice(i, i+maxChars));
   return chunks;
 }
 
 // ═══════════════════════════════════════════════════════
-//  API CALL
+//  API CALLS
 // ═══════════════════════════════════════════════════════
-async function callAPIStream(messages, system, onChunk) {
-  let fullText = '';
+async function callAPIStream(messages, system, onChunk, attachments = [], mode = 'generic') {
   let resp;
   try {
     resp = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 2000,
-        system,
-        messages,
-        stream: false,
-      })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:MODEL, max_tokens:2000, system, messages, attachments, mode, stream:false })
     });
   } catch (error) {
     throw new Error(`Unable to reach the local backend at ${API_BASE}. Start the FastAPI server first.`);
   }
-
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
+    const err = await resp.json().catch(()=>({}));
     throw new Error(err.detail || err.error?.message || `API error ${resp.status}`);
   }
-
   const data = await resp.json();
-  fullText = data.content?.map(b => b.text || '').join('') || '';
+  const fullText = data.content?.map(b=>b.text||'').join('') || '';
   onChunk(fullText);
   return fullText;
 }
-
-async function callAPI(messages, system) {
+async function callAPI(messages, system, attachments = [], mode = 'generic') {
   let resp;
   try {
     resp = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 2000, system, messages })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:MODEL, max_tokens:2000, system, messages, attachments, mode })
     });
   } catch (error) {
     throw new Error(`Unable to reach the local backend at ${API_BASE}. Start the FastAPI server first.`);
   }
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
+    const err = await resp.json().catch(()=>({}));
     throw new Error(err.detail || err.error?.message || `API error ${resp.status}`);
   }
   const data = await resp.json();
-  return data.content?.map(b => b.text || '').join('') || '';
+  return data.content?.map(b=>b.text||'').join('') || '';
 }
 
 // ═══════════════════════════════════════════════════════
-//  RENDER
+//  RENDER — FIX: addAiMessageForChat handles background chats
 // ═══════════════════════════════════════════════════════
-function addUserMessage(text) {
+
+/**
+ * Add a user message bubble. If chatId !== currentChatId, don't add to DOM (will render on switch).
+ */
+function addUserMessageWithFiles(text, files, chatId, messageIndex) {
+  if (chatId && chatId !== currentChatId) return null; // background chat — DOM updated on switch
   const inner = document.getElementById('chat-inner');
   const el = document.createElement('div');
   el.className = 'message user';
+  let attachHtml = '';
+  if (files && files.length > 0) {
+    const chips = files.map(f => `<div class="bubble-attachment"><i class="fa-solid fa-file-lines"></i> ${escHtml(f.name)}</div>`).join('');
+    attachHtml = `<div class="bubble-attachments">${chips}</div>`;
+  }
   el.innerHTML = `
     <div class="avatar user"><i class="fa-solid fa-user"></i></div>
     <div>
-      <div class="bubble">${escHtml(text)}</div>
+      <div class="bubble">${attachHtml}${escHtml(text)}</div>
       <div class="msg-meta">${formatTime()}</div>
-    </div>`;
-  inner.appendChild(el);
-  scrollBottom();
-  return el;
-}
-
-function addAiMessage(text, mode) {
-  const inner = document.getElementById('chat-inner');
-  const info = MODES[mode] || MODES.generic;
-  const el = document.createElement('div');
-  el.className = 'message ai';
-  el.innerHTML = `
-    <div class="avatar ai"><i class="fa-solid ${info.icon}"></i></div>
-    <div>
-      <div class="bubble">${text ? marked.parse(text) : '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>'}</div>
-      <div class="msg-meta">
-        <span class="mode-tag">${info.label}</span>
-        ${formatTime()}
+      <div class="msg-actions">
+        <button class="msg-action-btn" type="button" onclick="beginEditMessage('${chatId || currentChatId}', ${typeof messageIndex === 'number' ? messageIndex : -1})"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
       </div>
     </div>`;
   inner.appendChild(el);
@@ -1690,41 +1350,144 @@ function addAiMessage(text, mode) {
   return el;
 }
 
+/**
+ * FIX: Add AI message for a specific chat.
+ * If chatId !== currentChatId (background chat), create a detached element
+ * so the bubble reference is still valid for updating content even off-screen.
+ * When user switches to that chat, renderChatMessages() will show the final content from chats[].
+ */
+function addAiMessageForChat(chatId, text, mode) {
+  const info = MODES[mode] || MODES.generic;
+  const el = document.createElement('div');
+  el.className = 'message ai';
+  el.setAttribute('data-chat-id', chatId);
+  el.innerHTML = `
+    <div class="avatar ai"><i class="fa-solid ${info.icon}"></i></div>
+    <div>
+      <div class="bubble">${text ? marked.parse(text) : '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>'}</div>
+      <div class="msg-meta"><span class="mode-tag">${info.label}</span> ${formatTime()}</div>
+      <div class="msg-actions">
+        <button class="msg-action-btn copy-btn" type="button" ${text ? '' : 'disabled'} data-copy-text="${escHtml(text || '')}" onclick="copyMessageText(this.dataset.copyText, this)"><i class="fa-solid fa-copy"></i> Copy text</button>
+      </div>
+    </div>`;
+
+  if (chatId === currentChatId) {
+    document.getElementById('chat-inner').appendChild(el);
+    scrollBottom();
+  }
+  // else: detached element — still usable for bubble updates
+  return el;
+}
+
+function addAiMessage(text, mode) {
+  return addAiMessageForChat(currentChatId, text, mode);
+}
+
 function renderChatMessages() {
   const inner = document.getElementById('chat-inner');
   inner.innerHTML = '';
-
   const chat = chats[currentChatId];
   if (!chat || !chat.messages.length) {
     inner.innerHTML = `
       <div id="welcome-screen">
-        <div class="welcome-logo"><i class="fa-solid fa-shield-heart"></i></div>
-        <h1 class="welcome-title">Welcome to LifeGPT</h1>
-        <p class="welcome-sub">Your intelligent insurance and financial document assistant.<br/>Choose a module below or start typing.</p>
-        <div class="welcome-modules">
-          <div class="welcome-module-card" onclick="setMode('generic',null)"><div class="wmc-icon"><i class="fa-solid fa-comment-dots"></i></div><div class="wmc-title">Generic</div><div class="wmc-desc">Professional questions on any industry topic</div></div>
-          <div class="welcome-module-card" onclick="setMode('insurance',null)"><div class="wmc-icon"><i class="fa-solid fa-file-shield"></i></div><div class="wmc-title">Insurance Insights</div><div class="wmc-desc">Deep dive into life & general insurance</div></div>
-          <div class="welcome-module-card" onclick="setMode('summarise',null)"><div class="wmc-icon"><i class="fa-solid fa-align-left"></i></div><div class="wmc-title">Summarise</div><div class="wmc-desc">Upload documents for concise summaries</div></div>
-          <div class="welcome-module-card" onclick="setMode('multidoc',null)"><div class="wmc-icon"><i class="fa-solid fa-layer-group"></i></div><div class="wmc-title">Multi-Doc Q&A</div><div class="wmc-desc">Ask questions across multiple documents</div></div>
-          <div class="welcome-module-card" onclick="setMode('compare',null)"><div class="wmc-icon"><i class="fa-solid fa-code-compare"></i></div><div class="wmc-title">Compare Docs</div><div class="wmc-desc">Side-by-side comparison of 2+ documents</div></div>
-          <div class="welcome-module-card" onclick="setMode('numbers',null)"><div class="wmc-icon"><i class="fa-solid fa-calculator"></i></div><div class="wmc-title">Number Accuracy</div><div class="wmc-desc">Precise extraction of figures & data</div></div>
+        <div style="max-width:980px;margin:8px auto 0;padding:0 16px;text-align:center">
+          <div class="welcome-logo"><i class="fa-solid fa-shield-heart"></i></div>
+          <h1 class="welcome-title">Welcome to LifeGPT</h1>
+          <p class="welcome-sub">Your trusted AI partner at work.<br/>Choose a module below or start typing.</p>
+          <div class="welcome-modules">
+            <div class="welcome-module-card" onclick="setMode('generic',null)"><div class="wmc-icon"><i class="fa-solid fa-comment-dots"></i></div><div class="wmc-title">Generic</div><div class="wmc-desc">Professional questions on any industry topic</div></div>
+            <div class="welcome-module-card" onclick="setMode('insurance',null)"><div class="wmc-icon"><i class="fa-solid fa-file-shield"></i></div><div class="wmc-title">Insurance Insights</div><div class="wmc-desc">Deep dive into life & general insurance</div></div>
+            <div class="welcome-module-card" onclick="setMode('summarise',null)"><div class="wmc-icon"><i class="fa-solid fa-align-left"></i></div><div class="wmc-title">Summarise</div><div class="wmc-desc">Upload documents for concise summaries</div></div>
+            <div class="welcome-module-card" onclick="setMode('multidoc',null)"><div class="wmc-icon"><i class="fa-solid fa-layer-group"></i></div><div class="wmc-title">Multi-Doc Q&A</div><div class="wmc-desc">Ask questions across multiple documents</div></div>
+            <div class="welcome-module-card" onclick="setMode('compare',null)"><div class="wmc-icon"><i class="fa-solid fa-code-compare"></i></div><div class="wmc-title">Compare Docs</div><div class="wmc-desc">Side-by-side comparison of 2+ documents</div></div>
+            <div class="welcome-module-card" onclick="setMode('numbers',null)"><div class="wmc-icon"><i class="fa-solid fa-calculator"></i></div><div class="wmc-title">Number Accuracy</div><div class="wmc-desc">Precise extraction of figures & data</div></div>
+          </div>
         </div>
       </div>`;
     return;
   }
-
-  for (const msg of chat.messages) {
-    if (msg.role === 'user') addUserMessage(msg.content);
-    else {
-      const ai = addAiMessage(msg.content || '', msg.mode || chat.mode);
-      if (msg.download) {
+  chat.messages.forEach((msg, index) => {
+    if (msg.role === 'user') {
+      addUserMessageWithFiles(msg.content, msg.attachments || [], currentChatId, index);
+    } else {
+      // FIX: translation_pending shown as "in progress" with visual indicator
+      if (msg.kind === 'translation_pending') {
+        const ai = addAiMessageForChat(currentChatId, '', msg.mode || chat.mode);
         const bubble = ai.querySelector('.bubble');
-        bubble.innerHTML = marked.parse(msg.content || '') + downloadHtml(msg.download);
+        bubble.innerHTML = `<em style="color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;color:var(--primary)"></i>Translation in progress… (processing in background)</em>`;
+      } else {
+        const ai = addAiMessageForChat(currentChatId, msg.content || '', msg.mode || chat.mode);
+        if (msg.download) {
+          const bubble = ai.querySelector('.bubble');
+          bubble.innerHTML = marked.parse(msg.content || '') + downloadHtml(msg.download);
+        }
       }
     }
-  }
+  });
   hljs.highlightAll();
   scrollBottom();
+}
+
+function downloadHtml(download) {
+  if (!download) return '';
+  const href = download.dataUrl || download.url || '';
+  if (!href) return '';
+  const label = download.label || 'Download Translation';
+  const name = download.filename || 'translation_output';
+  return `<br/><a class="download-link" href="${href}" download="${escHtml(name)}"><i class="fa-solid fa-download"></i> ${escHtml(label)}</a>`;
+}
+
+function beginEditMessage(chatId, messageIndex) {
+  if (!chatId || !chats[chatId]) return;
+  if (currentChatId !== chatId) loadChat(chatId);
+  const chat = chats[chatId];
+  const msg = chat.messages[messageIndex];
+  if (!msg || msg.role !== 'user') return;
+  editMessageContext = { chatId, index: messageIndex };
+  const ta = document.getElementById('chat-input');
+  ta.value = msg.content || '';
+  autoResize(ta);
+  updateEditingState();
+  ta.focus();
+}
+
+function updateEditingState() {
+  const sendBtn = document.getElementById('send-btn');
+  const ta = document.getElementById('chat-input');
+  if (!sendBtn || !ta) return;
+  const isEditing = !!(editMessageContext && editMessageContext.chatId === currentChatId);
+  sendBtn.title = isEditing ? 'Save edit' : 'Send';
+  sendBtn.innerHTML = isEditing
+    ? '<i class="fa-solid fa-check"></i>'
+    : '<i class="fa-solid fa-paper-plane"></i>';
+  if (isEditing) {
+    ta.placeholder = 'Edit your message…';
+  } else {
+    updatePlaceholder();
+  }
+}
+
+async function copyMessageText(text, button) {
+  const payload = text || '';
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(payload);
+    } else {
+      const tmp = document.createElement('textarea');
+      tmp.value = payload;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      tmp.remove();
+    }
+    if (button) {
+      const originalHtml = button.innerHTML;
+      button.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+      setTimeout(() => { button.innerHTML = originalHtml; }, 1200);
+    }
+  } catch (e) {
+    alert('Copy failed');
+  }
 }
 
 function ensureCurrentChat() {
@@ -1734,55 +1497,33 @@ function ensureCurrentChat() {
 // ═══════════════════════════════════════════════════════
 //  UTIL
 // ═══════════════════════════════════════════════════════
-function escHtml(t) {
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function formatTime() {
-  return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-}
-function scrollBottom() {
-  const ca = document.getElementById('chat-area');
-  ca.scrollTop = ca.scrollHeight;
-}
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-}
+function escHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatTime() { return new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); }
+function scrollBottom() { const ca=document.getElementById('chat-area'); ca.scrollTop=ca.scrollHeight; }
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
 // ═══════════════════════════════════════════════════════
 //  PERSISTENCE
 // ═══════════════════════════════════════════════════════
 function saveChatStorage() {
   try {
-    // Save only non-empty chats to keep history clean.
     const toSave = {};
     Object.keys(chats).forEach(id => {
-      const hasMessages = Array.isArray(chats[id].messages) && chats[id].messages.length > 0;
-      if (!hasMessages) return;
-
-      const compactMessages = (chats[id].messages || []).map(m => {
+      if (!Array.isArray(chats[id].messages) || chats[id].messages.length === 0) return;
+      const compactMessages = chats[id].messages.map(m => {
         const msg = { ...m };
-        if (msg.download && !msg.download.dataUrl) {
+        // Don't persist blob URLs (they die on reload), only dataUrls
+        if (msg.download) {
           const { url, ...rest } = msg.download;
-          msg.download = rest;
+          msg.download = rest; // keep dataUrl if present
         }
         return msg;
       });
-
-      toSave[id] = {
-        title: chats[id].title,
-        mode: chats[id].mode,
-        messages: compactMessages,
-        files: [],
-      };
+      toSave[id] = { title:chats[id].title, mode:chats[id].mode, messages:compactMessages, files:[], started:chats[id].started };
     });
-
-    if (!toSave[currentChatId]) {
-      currentChatId = Object.keys(toSave)[0] || null;
-    }
-
     sessionStorage.setItem('lifegpt_chats', JSON.stringify(toSave));
     if (currentChatId) sessionStorage.setItem('lifegpt_current', currentChatId);
-  } catch(e) { /* quota */ }
+  } catch(e) { /* quota exceeded — silent fail */ }
 }
 
 function loadChatStorage() {
@@ -1791,10 +1532,11 @@ function loadChatStorage() {
     const savedCurrent = sessionStorage.getItem('lifegpt_current');
     if (saved) {
       chats = JSON.parse(saved);
-      currentChatId = savedCurrent;
+      currentChatId = savedCurrent && chats[savedCurrent] ? savedCurrent : Object.keys(chats).pop() || null;
       renderChatList();
       if (currentChatId && chats[currentChatId]) {
         setModeInternal(chats[currentChatId].mode || 'generic');
+        if (chats[currentChatId].started) collapseFileZone();
         renderChatMessages();
       } else {
         newChat();
@@ -1809,9 +1551,10 @@ function loadChatStorage() {
 //  INIT
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  marked.setOptions({ breaks: true, gfm: true });
+  marked.setOptions({ breaks:true, gfm:true });
   loadChatStorage();
   updatePlaceholder();
+  updateInputState();
 });
 </script>
 </body>

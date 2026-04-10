@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import base64
 import json
 import re
 import unicodedata
@@ -22,6 +23,8 @@ import urllib.request
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 import asyncio
+from openpyxl import load_workbook
+import xlrd
 
 # Add after app initialization
 class ConnectionManager:
@@ -57,6 +60,7 @@ from transliteration import (
 )
 
 app = FastAPI(title="PDF Translation API - True Text Replacement")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app.add_middleware(
     CORSMiddleware,
@@ -142,6 +146,252 @@ def sanitize_chat_messages(messages: List[Dict]) -> List[Dict]:
         sanitized_messages.append(sanitized_message)
 
     return sanitized_messages
+
+
+def tokenize_for_retrieval(text: str) -> List[str]:
+    return [token for token in re.findall(r"[a-z0-9]+", (text or "").lower()) if len(token) > 2]
+
+
+def chunk_text_for_retrieval(text: str, max_chars: int = 1600, overlap: int = 120) -> List[str]:
+    clean_text = (text or "").strip()
+    if not clean_text:
+        return []
+
+    if len(clean_text) <= max_chars:
+        return [clean_text]
+
+    chunks = []
+    step = max(1, max_chars - overlap)
+    for start in range(0, len(clean_text), step):
+        chunk = clean_text[start:start + max_chars].strip()
+        if chunk:
+            chunks.append(chunk)
+        if start + max_chars >= len(clean_text):
+            break
+    return chunks
+
+
+def score_chunk(query_tokens: List[str], chunk_text: str) -> int:
+    if not query_tokens:
+        return 0
+
+    chunk_tokens = set(tokenize_for_retrieval(chunk_text))
+    if not chunk_tokens:
+        return 0
+
+    return sum(1 for token in set(query_tokens) if token in chunk_tokens)
+
+
+def decode_data_url(data_url: str) -> tuple[bytes, str]:
+    header, encoded = data_url.split(",", 1)
+    mime_type = header[5:].split(";", 1)[0].lower()
+    return base64.b64decode(encoded), mime_type
+
+
+def extract_spreadsheet_sections(file_bytes: bytes, file_name: str) -> List[Dict]:
+    sections: List[Dict] = []
+    lower_name = file_name.lower()
+
+    if lower_name.endswith((".xlsx", ".xlsm")):
+        workbook = load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        for sheet in workbook.worksheets:
+            row_lines: List[str] = []
+            for row_index, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                values = [str(cell).strip() for cell in row if cell not in (None, "")]
+                if not values:
+                    continue
+                row_lines.append(f"Row {row_index}: " + " | ".join(values))
+            if row_lines:
+                sections.append({"label": f"Sheet {sheet.title}", "text": "\n".join(row_lines)})
+        return sections
+
+    if lower_name.endswith(".xls"):
+        workbook = xlrd.open_workbook(file_contents=file_bytes)
+        for sheet in workbook.sheets():
+            row_lines = []
+            for row_index in range(sheet.nrows):
+                values = [str(sheet.cell_value(row_index, col_index)).strip() for col_index in range(sheet.ncols)]
+                values = [value for value in values if value and value.lower() != "nan"]
+                if not values:
+                    continue
+                row_lines.append(f"Row {row_index + 1}: " + " | ".join(values))
+            if row_lines:
+                sections.append({"label": f"Sheet {sheet.name}", "text": "\n".join(row_lines)})
+
+    return sections
+
+
+def extract_pdf_sections(pdf_bytes: bytes, max_pages: int = 6) -> List[Dict]:
+    sections: List[Dict] = []
+
+    try:
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            for page_index, page in enumerate(pdf.pages[:max_pages], start=1):
+                page_text = (page.extract_text() or "").strip()
+                if page_text:
+                    sections.append({"label": f"Page {page_index}", "text": page_text})
+    except Exception:
+        sections = []
+
+    if sections:
+        return sections
+
+    try:
+        convert_kwargs = {"dpi": 150}
+        if POPLLER_PATH:
+            convert_kwargs["poppler_path"] = POPLLER_PATH
+        images = convert_from_bytes(pdf_bytes, first_page=1, last_page=max_pages, **convert_kwargs)
+    except Exception:
+        return []
+
+    for page_index, image in enumerate(images, start=1):
+        try:
+            ocr_text = (pytesseract.image_to_string(image) or "").strip()
+            if ocr_text:
+                sections.append({"label": f"Page {page_index} (OCR)", "text": ocr_text})
+        finally:
+            try:
+                image.close()
+            except Exception:
+                pass
+
+    return sections
+
+
+def extract_image_sections(image_bytes: bytes) -> List[Dict]:
+    try:
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception:
+        return []
+
+    try:
+        text = (pytesseract.image_to_string(image) or "").strip()
+        if text:
+            return [{"label": "Image OCR", "text": text}]
+    except Exception:
+        return []
+    finally:
+        try:
+            image.close()
+        except Exception:
+            pass
+
+    return []
+
+
+def build_attachment_context(attachments: List[Dict], query_text: str = "", mode: str = "generic") -> str:
+    attachment_blocks: List[str] = []
+    query_tokens = tokenize_for_retrieval(query_text)
+    max_sections = 6 if mode in {"multidoc", "compare"} else 3
+    max_chunk_chars = 1400 if mode in {"multidoc", "compare"} else 1000
+
+    for attachment in attachments or []:
+        if not isinstance(attachment, dict):
+            continue
+
+        name = str(attachment.get("name") or "attachment")
+        content = attachment.get("content") or attachment.get("raw") or ""
+        if not isinstance(content, str) or not content.startswith("data:"):
+            continue
+
+        mime_type = str(attachment.get("type") or "").lower()
+        file_bytes, data_mime_type = decode_data_url(content)
+        mime_type = mime_type or data_mime_type
+        lower_name = name.lower()
+
+        if mime_type.startswith("image/") or lower_name.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")):
+            sections = extract_image_sections(file_bytes)
+        elif mime_type == "application/pdf" or lower_name.endswith(".pdf"):
+            sections = extract_pdf_sections(file_bytes)
+        elif lower_name.endswith((".xlsx", ".xlsm", ".xls")) or mime_type in {
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel",
+        }:
+            sections = extract_spreadsheet_sections(file_bytes, name)
+        else:
+            continue
+
+        candidate_chunks: List[Dict] = []
+        for section in sections:
+            for chunk_index, chunk_text in enumerate(chunk_text_for_retrieval(section["text"], max_chars=max_chunk_chars), start=1):
+                candidate_chunks.append({
+                    "label": f"{section['label']} • Chunk {chunk_index}" if len(section["text"]) > max_chunk_chars else section["label"],
+                    "text": chunk_text,
+                    "score": score_chunk(query_tokens, chunk_text),
+                })
+
+        if not candidate_chunks:
+            continue
+
+        if query_tokens:
+            candidate_chunks.sort(key=lambda item: (-item["score"], len(item["text"])))
+        selected_chunks = candidate_chunks[:max_sections]
+
+        formatted_chunks = []
+        for chunk in selected_chunks:
+            formatted_chunks.append(f"=== {name} | {chunk['label']} ===\n{mask_pii_text(chunk['text'])}")
+        attachment_blocks.append("\n\n".join(formatted_chunks))
+
+    if not attachment_blocks:
+        return ""
+
+    return "\n\n--- ATTACHMENT INDEX ---\n" + "\n\n".join(attachment_blocks)
+
+
+def extract_text_from_image_bytes(image_bytes: bytes) -> str:
+    try:
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception:
+        return ""
+
+    try:
+        return (pytesseract.image_to_string(image) or "").strip()
+    except Exception:
+        return ""
+    finally:
+        try:
+            image.close()
+        except Exception:
+            pass
+
+
+def extract_text_from_pdf_bytes(pdf_bytes: bytes, max_pages: int = 3) -> str:
+    text_parts: List[str] = []
+
+    try:
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            for page in pdf.pages[:max_pages]:
+                page_text = (page.extract_text() or "").strip()
+                if page_text:
+                    text_parts.append(page_text)
+    except Exception:
+        text_parts = []
+
+    combined_text = "\n\n".join(text_parts).strip()
+    if combined_text:
+        return combined_text
+
+    try:
+        convert_kwargs = {"dpi": 150}
+        if POPLLER_PATH:
+            convert_kwargs["poppler_path"] = POPLLER_PATH
+        images = convert_from_bytes(pdf_bytes, first_page=1, last_page=max_pages, **convert_kwargs)
+    except Exception:
+        return ""
+
+    ocr_parts: List[str] = []
+    for image in images:
+        try:
+            ocr_text = (pytesseract.image_to_string(image) or "").strip()
+            if ocr_text:
+                ocr_parts.append(ocr_text)
+        finally:
+            try:
+                image.close()
+            except Exception:
+                pass
+
+    return "\n\n".join(ocr_parts).strip()
 
 
 def call_azure_openai_chat(messages: List[Dict], system: str, model: Optional[str] = None, max_tokens: int = 2000) -> str:
@@ -809,6 +1059,22 @@ async def api_chat(payload: Dict):
     system = payload.get("system", "")
     model = payload.get("model")
     max_tokens = int(payload.get("max_tokens", 2000))
+    attachments = payload.get("attachments", [])
+    mode = payload.get("mode", "generic")
+
+    query_text = ""
+    if messages:
+        last_message = messages[-1]
+        if isinstance(last_message, dict):
+            query_text = str(last_message.get("content") or "")
+
+    attachment_context = build_attachment_context(attachments, query_text=query_text, mode=mode)
+    if attachment_context and messages:
+        last_message = messages[-1]
+        if isinstance(last_message, dict) and isinstance(last_message.get("content"), str):
+            last_message = dict(last_message)
+            last_message["content"] = f"{last_message['content']}{attachment_context}"
+            messages = messages[:-1] + [last_message]
 
     guardrails = (
         "You are LifeGPT, a professional assistant for finance, insurance, regulations, and document analysis. "
@@ -1465,10 +1731,18 @@ async def test_rules(
 @app.get("/", response_class=HTMLResponse)
 async def root():
     try:
-        with open("index.html", "r", encoding="utf-8") as f:
+        with open(os.path.join(BASE_DIR, "index.html"), "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     except FileNotFoundError:
         return HTMLResponse(content="<h1>index.html not found. Please ensure it's in the same directory as main.py</h1>")
+
+
+@app.get("/logo.jpg")
+async def logo():
+    logo_path = os.path.join(BASE_DIR, "logo.jpg")
+    if not os.path.exists(logo_path):
+        raise HTTPException(status_code=404, detail="logo.jpg not found")
+    return FileResponse(logo_path, media_type="image/jpeg", filename="logo.jpg")
 
 
 @app.get("/api/info")

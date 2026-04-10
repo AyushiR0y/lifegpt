@@ -92,3 +92,16 @@ outputs/
 
 # PDF translation generated files
 translated_*.pdf
+
+# Local OCR/font binaries and test assets
+Hind_Siliguri/
+Noto_Sans_*/
+Tiro_Devanagari_Marathi/
+poppler-*/
+logo.jpg
+textpdf.pdf
+
+# Cache and runtime leftovers
+*.cache
+cache/
+logs/
