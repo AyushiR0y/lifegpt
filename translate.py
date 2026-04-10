@@ -1,7 +1,5 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, WebSocket
+from fastapi.responses import FileResponse
 import base64
 import json
 import re
@@ -20,9 +18,7 @@ import pytesseract
 import glob
 import urllib.error
 import urllib.request
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, WebSocket
 from fastapi.websockets import WebSocketDisconnect
-import asyncio
 from openpyxl import load_workbook
 import xlrd
 
@@ -59,16 +55,7 @@ from transliteration import (
     should_keep_original
 )
 
-app = FastAPI(title="PDF Translation API - True Text Replacement")
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter()
 
 # Global model variables
 text_model = None
@@ -1041,52 +1028,6 @@ def load_models():
     text_model.eval()
     print("Text translation model loaded!")
 
-@app.on_event("startup")
-async def startup_event():
-    global MODEL_LOAD_ERROR
-    try:
-        load_models()
-        MODEL_LOAD_ERROR = None
-    except Exception as e:
-        MODEL_LOAD_ERROR = str(e)
-        print(f"Warning: translation model failed to load. Chat API will still run. Error: {MODEL_LOAD_ERROR}")
-
-
-@app.post("/api/chat")
-async def api_chat(payload: Dict):
-    """Proxy chat requests to Azure OpenAI using credentials from .env."""
-    messages = payload.get("messages", [])
-    system = payload.get("system", "")
-    model = payload.get("model")
-    max_tokens = int(payload.get("max_tokens", 2000))
-    attachments = payload.get("attachments", [])
-    mode = payload.get("mode", "generic")
-
-    query_text = ""
-    if messages:
-        last_message = messages[-1]
-        if isinstance(last_message, dict):
-            query_text = str(last_message.get("content") or "")
-
-    attachment_context = build_attachment_context(attachments, query_text=query_text, mode=mode)
-    if attachment_context and messages:
-        last_message = messages[-1]
-        if isinstance(last_message, dict) and isinstance(last_message.get("content"), str):
-            last_message = dict(last_message)
-            last_message["content"] = f"{last_message['content']}{attachment_context}"
-            messages = messages[:-1] + [last_message]
-
-    guardrails = (
-        "You are LifeGPT, a professional assistant for finance, insurance, regulations, and document analysis. "
-        "Refuse any personal, informal, social, entertainment, or unrelated questions. "
-        "Do not answer requests that are outside the active module. "
-        "If the user asks for private information, credentials, account details, or other personal data, treat it as redacted and do not repeat it."
-    )
-
-    combined_system = f"{guardrails}\n\n{system}".strip()
-    answer = call_azure_openai_chat(messages, combined_system, model=model, max_tokens=max_tokens)
-    return {"content": [{"text": answer}]}
-
 def get_language_code(lang_name: str) -> str:
     """Convert language name to NLLB language code"""
     lang_map = {
@@ -1433,7 +1374,7 @@ def ocr_pdf_page(image: Image.Image) -> List[Dict]:
         })
     
     return text_blocks
-@app.websocket("/ws/{client_id}")
+@router.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await manager.connect(websocket, client_id)
     try:
@@ -1441,7 +1382,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(client_id)
-@app.post("/translate-pdf/")
+@router.post("/translate-pdf/")
 async def translate_pdf(
     file: UploadFile = File(...),
     source_lang: str = Form(...),
@@ -1534,7 +1475,7 @@ async def translate_pdf(
         traceback.print_exc()
         await log(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
-@app.post("/translate-form/")
+@router.post("/translate-form/")
 async def translate_form(
     file: UploadFile = File(...),
     source_lang: str = Form(...),
@@ -1632,7 +1573,7 @@ async def translate_form(
         gc.collect()
         raise HTTPException(status_code=500, detail=f"Form translation failed: {str(e)}")
 
-@app.get("/analyze-form/")
+@router.get("/analyze-form/")
 async def analyze_form(file: UploadFile = File(...)):
     """
     Analyze form structure without translating
@@ -1682,25 +1623,14 @@ async def analyze_form(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
 
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "model_loaded": text_model is not None,
-        "model_load_error": MODEL_LOAD_ERROR,
-        "fonts_available": list(FONTS.keys()),
-        "poppler_path": POPLLER_PATH,
-        "device": str(device) if device else "not initialized"
-    }
-
-@app.get("/languages")
+@router.get("/languages")
 async def list_languages():
     return {
         "indian_languages": ["Hindi", "Bengali", "Tamil", "Telugu", "Marathi", "Gujarati", "Kannada", "Malayalam"],
         "fonts_status": {lang: "✓" if lang in FONTS else "✗" for lang in ['devanagari', 'bengali', 'tamil', 'telugu']}
     }
 
-@app.get("/translation-rules")
+@router.get("/translation-rules")
 async def get_translation_rules():
     """Get current translation rules"""
     return {
@@ -1712,7 +1642,7 @@ async def get_translation_rules():
         }
     }
 
-@app.get("/test-rules")
+@router.get("/test-rules")
 async def test_rules(
     text: str = "Google and Microsoft use AI and machine learning for email services."
 ):
@@ -1728,47 +1658,3 @@ async def test_rules(
             "kept_original": [word for word in text.split() if word.lower() in KEEP_ORIGINAL_WORDS_LOWER]
         }
     }
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    try:
-        with open(os.path.join(BASE_DIR, "index.html"), "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>index.html not found. Please ensure it's in the same directory as main.py</h1>")
-
-
-@app.get("/logo.jpg")
-async def logo():
-    logo_path = os.path.join(BASE_DIR, "logo.jpg")
-    if not os.path.exists(logo_path):
-        raise HTTPException(status_code=404, detail="logo.jpg not found")
-    return FileResponse(logo_path, media_type="image/jpeg", filename="logo.jpg")
-
-
-@app.get("/api/info")
-async def api_info():
-    return {
-        "message": "PDF Translation API - Dual Pipeline",
-        "model": "NLLB-200",
-        "fonts_found": len(FONTS),
-        "pipelines": {
-            "regular": {
-                "endpoint": "/translate-pdf/",
-                "description": "For regular documents, brochures, articles",
-                "method": "Text replacement"
-            },
-            "forms": {
-                "endpoint": "/translate-form/",
-                "description": "For proposal forms, applications, fillable PDFs",
-                "method": "Label translation with field preservation"
-            }
-        },
-        "utilities": {
-            "analyze_form": "/analyze-form/",
-            "health": "/health",
-            "languages": "/languages"
-        }
-    }
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
