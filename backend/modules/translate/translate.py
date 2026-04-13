@@ -44,7 +44,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 # Import transliteration rules
-from transliteration import (
+from .transliteration import (
     TRANSLITERATE_WORDS,
     KEEP_ORIGINAL_WORDS,
     TRANSLITERATE_WORDS_LOWER,
@@ -66,10 +66,43 @@ MODEL_LOAD_ERROR = None
 POPLLER_PATH = None
 
 
+def _get_env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        value = int(str(raw).strip())
+        return value if value > 0 else default
+    except Exception:
+        return default
+
+
+def get_translate_pdf_max_file_mb() -> int:
+    return _get_env_int("TRANSLATE_PDF_MAX_FILE_MB", 50)
+
+
+def get_translate_form_max_file_mb() -> int:
+    return _get_env_int("TRANSLATE_FORM_MAX_FILE_MB", 50)
+
+
 def load_env_file(env_path: Optional[str] = None) -> None:
     """Load key/value pairs from .env into process environment without overriding existing vars."""
     if env_path is None:
-        env_path = os.path.join(os.path.dirname(__file__), ".env")
+        # Find the nearest .env walking up from this module directory.
+        cursor = os.path.abspath(os.path.dirname(__file__))
+        env_path = None
+        for _ in range(8):
+            candidate = os.path.join(cursor, ".env")
+            if os.path.exists(candidate):
+                env_path = candidate
+                break
+            parent = os.path.dirname(cursor)
+            if parent == cursor:
+                break
+            cursor = parent
+
+        if env_path is None:
+            env_path = os.path.join(os.getcwd(), ".env")
 
     if not os.path.exists(env_path):
         return
@@ -1383,6 +1416,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except WebSocketDisconnect:
         manager.disconnect(client_id)
 @router.post("/translate-pdf/")
+@router.post("/api/modules/translate/upload")
 async def translate_pdf(
     file: UploadFile = File(...),
     source_lang: str = Form("English"),
@@ -1402,6 +1436,15 @@ async def translate_pdf(
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_input:
             content = await file.read()
+
+            max_translate_pdf_file_mb = get_translate_pdf_max_file_mb()
+            file_size_mb = len(content) / (1024 * 1024)
+            if file_size_mb > max_translate_pdf_file_mb:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large ({file_size_mb:.1f}MB). Max {max_translate_pdf_file_mb}MB for translate-pdf."
+                )
+
             tmp_input.write(content)
             input_path = tmp_input.name
         
@@ -1470,12 +1513,15 @@ async def translate_pdf(
             filename=f"translated_{file.filename}"
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()
         await log(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
 @router.post("/translate-form/")
+@router.post("/api/modules/translate/form")
 async def translate_form(
     file: UploadFile = File(...),
     source_lang: str = Form(...),
@@ -1497,11 +1543,12 @@ async def translate_form(
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_input:
             content = await file.read()
             
+            max_translate_form_file_mb = get_translate_form_max_file_mb()
             file_size_mb = len(content) / (1024 * 1024)
-            if file_size_mb > 50:
+            if file_size_mb > max_translate_form_file_mb:
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"File too large ({file_size_mb:.1f}MB). Max 50MB for forms."
+                    status_code=413,
+                    detail=f"File too large ({file_size_mb:.1f}MB). Max {max_translate_form_file_mb}MB for forms."
                 )
             
             tmp_input.write(content)
@@ -1574,6 +1621,7 @@ async def translate_form(
         raise HTTPException(status_code=500, detail=f"Form translation failed: {str(e)}")
 
 @router.get("/analyze-form/")
+@router.get("/api/modules/translate/analyze")
 async def analyze_form(file: UploadFile = File(...)):
     """
     Analyze form structure without translating
@@ -1624,6 +1672,7 @@ async def analyze_form(file: UploadFile = File(...)):
         traceback.print_exc()
 
 @router.get("/languages")
+@router.get("/api/modules/translate/languages")
 async def list_languages():
     return {
         "indian_languages": ["Hindi", "Bengali", "Tamil", "Telugu", "Marathi", "Gujarati", "Kannada", "Malayalam"],
@@ -1631,6 +1680,7 @@ async def list_languages():
     }
 
 @router.get("/translation-rules")
+@router.get("/api/modules/translate/rules")
 async def get_translation_rules():
     """Get current translation rules"""
     return {
@@ -1643,6 +1693,7 @@ async def get_translation_rules():
     }
 
 @router.get("/test-rules")
+@router.get("/api/modules/translate/test")
 async def test_rules(
     text: str = "Google and Microsoft use AI and machine learning for email services."
 ):
