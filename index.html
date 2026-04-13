@@ -111,6 +111,9 @@
           </button>
           <textarea id="chat-input" rows="1" placeholder="Ask anything..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <div class="input-actions">
+            <button class="icon-btn" id="voice-btn" title="Voice input" onclick="toggleVoiceInput()" aria-label="Voice input">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
             <button class="icon-btn" id="send-btn" onclick="sendMessage()" title="Send">
               <i class="fa-solid fa-arrow-up"></i>
             </button>

@@ -57,7 +57,7 @@ def _resolve_multidoc_attachments(chat_id: str, attachments: list) -> list:
     return []
 
 
-def _run_chat(payload: Dict, forced_mode: str | None = None):
+async def _run_chat(payload: Dict, forced_mode: str | None = None):
     messages = payload.get("messages", [])
     mode = forced_mode or payload.get("mode", "generic")
     summary_depth = payload.get("summary_depth")
@@ -77,7 +77,13 @@ def _run_chat(payload: Dict, forced_mode: str | None = None):
 
     if mode == "multidoc":
         active_attachments = _resolve_multidoc_attachments(chat_id, attachments)
-        answer = answer_multidoc(messages=messages, attachments=active_attachments, model=model, max_tokens=max_tokens)
+        answer = await answer_multidoc(
+            messages=messages,
+            attachments=active_attachments,
+            chat_id=chat_id,
+            model=model,
+            max_tokens=max_tokens,
+        )
         return {"content": [{"text": answer}]}
 
     attachment_context = translate_module.build_attachment_context(attachments, query_text=query_text, mode=mode)
@@ -104,7 +110,7 @@ def _run_chat(payload: Dict, forced_mode: str | None = None):
 @router.post("/chat")
 async def api_chat(payload: Dict):
     """Proxy chat requests to Azure OpenAI using credentials from .env."""
-    return _run_chat(payload)
+    return await _run_chat(payload)
 
 
 @router.post("/modules/{module_name}/chat")
@@ -112,4 +118,4 @@ async def api_module_chat(module_name: str, payload: Dict):
     mode = (module_name or "").strip().lower()
     if mode not in ALLOWED_MODULES:
         raise HTTPException(status_code=404, detail=f"Unknown module: {module_name}")
-    return _run_chat(payload, forced_mode=mode)
+    return await _run_chat(payload, forced_mode=mode)

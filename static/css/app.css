@@ -962,6 +962,21 @@ body {
   color: var(--primary);
 }
 
+.icon-btn.recording {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.icon-btn.recording:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 #send-btn {
   background: var(--primary);
   color: #ffffff;

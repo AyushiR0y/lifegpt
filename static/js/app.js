@@ -60,6 +60,10 @@ let summaryPending = null;
 let editMessageContext = null;
 const streamingChats = new Set();
 let currentUserId = "anonymous";
+let voiceRecognition = null;
+let voiceRecognitionActive = false;
+let voiceTranscriptBase = "";
+let voiceTranscriptLive = "";
 
 function sanitizeHtml(html) {
   if (window.DOMPurify && typeof window.DOMPurify.sanitize === "function") {
@@ -198,6 +202,99 @@ function updateInputState() {
   }
 
   renderChatList();
+}
+
+function updateVoiceButtonState() {
+  const btn = document.getElementById("voice-btn");
+  if (!btn) return;
+
+  if (!voiceRecognition) {
+    btn.disabled = true;
+    btn.title = "Voice input is not supported in this browser";
+    btn.classList.remove("recording");
+    return;
+  }
+
+  btn.disabled = false;
+  btn.title = voiceRecognitionActive ? "Stop voice input" : "Voice input";
+  btn.classList.toggle("recording", voiceRecognitionActive);
+  btn.innerHTML = voiceRecognitionActive
+    ? '<i class="fa-solid fa-stop"></i>'
+    : '<i class="fa-solid fa-microphone"></i>';
+}
+
+function setupVoiceInput() {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById("voice-btn");
+  if (!Recognition || !btn) {
+    voiceRecognition = null;
+    updateVoiceButtonState();
+    return;
+  }
+
+  voiceRecognition = new Recognition();
+  voiceRecognition.lang = "en-IN";
+  voiceRecognition.interimResults = true;
+  voiceRecognition.continuous = false;
+
+  voiceRecognition.onstart = () => {
+    voiceRecognitionActive = true;
+    voiceTranscriptLive = "";
+    const ta = document.getElementById("chat-input");
+    voiceTranscriptBase = ta ? String(ta.value || "").trimEnd() : "";
+    updateVoiceButtonState();
+  };
+
+  voiceRecognition.onresult = (event) => {
+    let transcript = "";
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      transcript += event.results[index][0].transcript;
+    }
+    voiceTranscriptLive = transcript.trim();
+
+    const ta = document.getElementById("chat-input");
+    if (ta) {
+      const pieces = [voiceTranscriptBase, voiceTranscriptLive].filter(Boolean);
+      ta.value = pieces.join(" ").replace(/\s+/g, " ").trimStart();
+      autoResize(ta);
+    }
+  };
+
+  voiceRecognition.onerror = (event) => {
+    voiceRecognitionActive = false;
+    updateVoiceButtonState();
+    const message = event && event.error ? String(event.error) : "Voice input failed";
+    if (message !== "no-speech") {
+      alert(`Voice input failed: ${message}`);
+    }
+  };
+
+  voiceRecognition.onend = () => {
+    voiceRecognitionActive = false;
+    voiceTranscriptLive = "";
+    voiceTranscriptBase = "";
+    updateVoiceButtonState();
+  };
+
+  updateVoiceButtonState();
+}
+
+function toggleVoiceInput() {
+  if (!voiceRecognition) {
+    alert("Voice input is not supported in this browser.");
+    return;
+  }
+
+  if (voiceRecognitionActive) {
+    voiceRecognition.stop();
+    return;
+  }
+
+  try {
+    voiceRecognition.start();
+  } catch (error) {
+    alert(`Could not start voice input: ${error.message || error}`);
+  }
 }
 
 function ensureCurrentChat() {
@@ -1041,6 +1138,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updatePlaceholder();
   updateInputState();
   updateEditingState();
+  setupVoiceInput();
 });
 
 window.newChat = newChat;
@@ -1060,6 +1158,7 @@ window.showSummaryModal = showSummaryModal;
 window.closeSummaryModal = closeSummaryModal;
 window.chooseSummaryDepth = chooseSummaryDepth;
 window.toggleSidebar = toggleSidebar;
+window.toggleVoiceInput = toggleVoiceInput;
 window.callAPIStream = callAPIStream;
 window.callAPI = callAPI;
 window.setLifeGptUserContext = setLifeGptUserContext;

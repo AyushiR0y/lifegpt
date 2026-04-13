@@ -131,6 +131,7 @@
         messages,
         attachments,
         chat_id: chatId,
+        session_id: chatId,
         mode,
         summary_depth: summaryDepth,
       }),
