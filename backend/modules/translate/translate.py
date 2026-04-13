@@ -21,6 +21,7 @@ import urllib.request
 from fastapi.websockets import WebSocketDisconnect
 from openpyxl import load_workbook
 import xlrd
+from backend.core.pii_service import pii_service
 
 # Add after app initialization
 class ConnectionManager:
@@ -126,46 +127,12 @@ def load_env_file(env_path: Optional[str] = None) -> None:
 load_env_file()
 
 
-PII_PATTERNS = [
-    (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "[EMAIL]"),
-    (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[SSN]"),
-    (re.compile(r"\b\d{4}\s?\d{4}\s?\d{4}\b"), "[AADHAAR]"),
-    (re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b"), "[PAN]"),
-    (re.compile(r"\b(?:\d[ -]*?){13,19}\b"), "[CARD_NUMBER]"),
-    (re.compile(r"(?<!\d)(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?){2,4}\d{3,4}(?!\d)"), "[PHONE]"),
-]
-
-
 def mask_pii_text(text: str) -> str:
-    if not text:
-        return text
-
-    masked = text
-    for pattern, replacement in PII_PATTERNS:
-        masked = pattern.sub(replacement, masked)
-    return masked
+    return pii_service.mask_text(text).masked_text
 
 
 def sanitize_chat_messages(messages: List[Dict]) -> List[Dict]:
-    sanitized_messages = []
-    for message in messages or []:
-        sanitized_message = dict(message)
-        content = sanitized_message.get("content")
-        if isinstance(content, str):
-            sanitized_message["content"] = mask_pii_text(content)
-        elif isinstance(content, list):
-            sanitized_parts = []
-            for part in content:
-                if isinstance(part, dict) and isinstance(part.get("text"), str):
-                    sanitized_part = dict(part)
-                    sanitized_part["text"] = mask_pii_text(sanitized_part["text"])
-                    sanitized_parts.append(sanitized_part)
-                else:
-                    sanitized_parts.append(part)
-            sanitized_message["content"] = sanitized_parts
-        sanitized_messages.append(sanitized_message)
-
-    return sanitized_messages
+    return pii_service.sanitize_messages(messages)
 
 
 def tokenize_for_retrieval(text: str) -> List[str]:
