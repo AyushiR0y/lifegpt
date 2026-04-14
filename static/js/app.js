@@ -22,7 +22,7 @@ const MODES = {
   summarise: { label: "Summarise", icon: "fa-align-left", fileUpload: true },
   multidoc: { label: "Multi-Doc Q&A", icon: "fa-layer-group", fileUpload: true },
   compare: { label: "Compare Docs", icon: "fa-code-compare", fileUpload: true },
-  numbers: { label: "Number Accuracy", icon: "fa-calculator", fileUpload: true },
+  numbers: { label: "Data Analysis", icon: "fa-calculator", fileUpload: true },
   translate: { label: "Document Translation", icon: "fa-language", fileUpload: false },
 };
 
