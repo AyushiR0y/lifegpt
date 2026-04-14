@@ -75,7 +75,8 @@ def should_load_local_models() -> bool:
         return override.strip().lower() in {"1", "true", "yes", "on"}
 
     on_render = os.getenv("RENDER", "").strip().lower() in {"1", "true", "yes", "on"}
-    return not on_render
+    has_hosted_port = bool(os.getenv("PORT"))
+    return not (on_render or has_hosted_port)
 
 
 @app.on_event("startup")

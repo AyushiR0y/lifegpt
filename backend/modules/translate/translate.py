@@ -4,8 +4,6 @@ import base64
 import json
 import re
 import unicodedata
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from pdf2image import convert_from_bytes
 from PIL import Image
 import io
@@ -62,6 +60,7 @@ router = APIRouter()
 text_model = None
 text_tokenizer = None
 device = None
+_torch = None
 FONTS = {}
 MODEL_LOAD_ERROR = None
 POPLLER_PATH = None
@@ -1007,12 +1006,20 @@ def find_fonts():
 
 def load_models():
     """Load translation models on startup"""
-    global text_model, text_tokenizer, device, FONTS, POPLLER_PATH
+    global text_model, text_tokenizer, device, FONTS, POPLLER_PATH, _torch
+
+    try:
+        import torch as _torch_local
+        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+    except Exception as exc:
+        raise RuntimeError(f"Failed to import local translation dependencies: {exc}") from exc
+
+    _torch = _torch_local
 
     # Avoid HF Xet streaming issues on some Windows setups.
     os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = _torch.device("cuda" if _torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
     
     POPLLER_PATH = find_poppler_path()
@@ -1023,7 +1030,7 @@ def load_models():
     text_tokenizer = AutoTokenizer.from_pretrained(text_model_name)
     text_model = AutoModelForSeq2SeqLM.from_pretrained(
         text_model_name,
-        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+        torch_dtype=_torch.float16 if _torch.cuda.is_available() else _torch.float32
     ).to(device)
     text_model.eval()
     print("Text translation model loaded!")
@@ -1080,7 +1087,10 @@ def translate_text_batch(texts: List[str], source_lang: str, target_lang: str) -
     inputs = text_tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=512).to(device)
     forced_bos_token_id = get_language_token_id(text_tokenizer, tgt_code)
     
-    with torch.no_grad():
+    if _torch is None:
+        return translate_text_batch_with_azure(texts, source_lang, target_lang)
+
+    with _torch.no_grad():
         translated_tokens = text_model.generate(
             **inputs, forced_bos_token_id=forced_bos_token_id,
             max_length=512, num_beams=5, early_stopping=True
