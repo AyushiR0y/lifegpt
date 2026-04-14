@@ -1,4 +1,5 @@
 import re
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -36,14 +37,28 @@ class UniversalPIIService:
 
     def __init__(self) -> None:
         self._analyzer = None
+        self._presidio_attempted = False
+        self._presidio_enabled = self._should_enable_presidio()
         self._compiled_patterns = {
             key: re.compile(pattern, re.IGNORECASE)
             for key, pattern in self._REGEX_PATTERNS.items()
         }
-        self._init_presidio()
+
+    @staticmethod
+    def _should_enable_presidio() -> bool:
+        override = os.getenv("PII_USE_PRESIDIO")
+        if override is not None:
+            return override.strip().lower() in {"1", "true", "yes", "on"}
+
+        hosted = bool(os.getenv("PORT")) or os.getenv("RENDER", "").strip().lower() in {"1", "true", "yes", "on"}
+        return not hosted
 
     def _init_presidio(self) -> None:
         """Try to initialize Presidio; fail open to regex-only mode."""
+        if self._presidio_attempted or not self._presidio_enabled:
+            return
+
+        self._presidio_attempted = True
         try:
             from presidio_analyzer import AnalyzerEngine, Pattern, PatternRecognizer
 
@@ -85,6 +100,8 @@ class UniversalPIIService:
     def mask_text(self, text: str) -> PIIMaskResult:
         if not text:
             return PIIMaskResult(masked_text=text or "")
+
+        self._init_presidio()
 
         spans: List[Dict[str, Any]] = []
         placeholders: Dict[str, str] = {}
