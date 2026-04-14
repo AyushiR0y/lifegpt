@@ -933,7 +933,7 @@ function renderChatMessages() {
             <div class="welcome-module-card" onclick="setMode('summarise')"><div class="wmc-icon"><i class="fa-solid fa-align-left"></i></div><div class="wmc-title">Summarise</div><div class="wmc-desc">Upload documents for concise summaries</div></div>
             <div class="welcome-module-card" onclick="setMode('multidoc')"><div class="wmc-icon"><i class="fa-solid fa-layer-group"></i></div><div class="wmc-title">Multi-Doc Q&A</div><div class="wmc-desc">Ask questions across multiple documents</div></div>
             <div class="welcome-module-card" onclick="setMode('compare')"><div class="wmc-icon"><i class="fa-solid fa-code-compare"></i></div><div class="wmc-title">Compare Docs</div><div class="wmc-desc">Side-by-side comparison of 2+ documents</div></div>
-            <div class="welcome-module-card" onclick="setMode('numbers')"><div class="wmc-icon"><i class="fa-solid fa-calculator"></i></div><div class="wmc-title">Number Accuracy</div><div class="wmc-desc">Precise extraction of figures & data</div></div>
+            <div class="welcome-module-card" onclick="setMode('numbers')"><div class="wmc-icon"><i class="fa-solid fa-calculator"></i></div><div class="wmc-title">Data Analysis</div><div class="wmc-desc">Precise extraction of figures & data</div></div>
           </div>
         </div>
       </div>
