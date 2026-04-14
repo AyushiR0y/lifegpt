@@ -62,7 +62,7 @@ async def _run_chat(payload: Dict, forced_mode: str | None = None):
     mode = forced_mode or payload.get("mode", "generic")
     summary_depth = payload.get("summary_depth")
     model = payload.get("model")
-    max_tokens = int(payload.get("max_tokens", 2000))
+    max_tokens = int(payload.get("max_tokens", 1200))
     attachments = payload.get("attachments", [])
     chat_id = str(payload.get("chat_id") or "").strip()
 

@@ -21,7 +21,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_EMB_MODEL = os.getenv("OPENAI_EMB_MODEL", "text-embedding-3-small").strip()
 MULTIDOC_SESSION_TTL_SECONDS = int(os.getenv("MULTIDOC_SESSION_TTL_SECONDS", "7200"))
 MULTIDOC_MAX_SESSIONS = int(os.getenv("MULTIDOC_MAX_SESSIONS", "200"))
-MULTIDOC_MAX_CONTEXT_WORDS = int(os.getenv("MULTIDOC_MAX_CONTEXT_WORDS", "6000"))
+MULTIDOC_MAX_CONTEXT_WORDS = int(os.getenv("MULTIDOC_MAX_CONTEXT_WORDS", "3200"))
 MULTIDOC_EMBED_CACHE_MAX = int(os.getenv("MULTIDOC_EMBED_CACHE_MAX", "128"))
 
 _STOP_WORDS = {
@@ -384,7 +384,7 @@ async def answer_multidoc(
     attachments: List[Dict[str, Any]],
     chat_id: Optional[str] = None,
     model: Optional[str] = None,
-    max_tokens: int = 2200,
+    max_tokens: int = 1200,
 ) -> str:
     sid = _session_id(chat_id)
     sess = _STORE.get_or_create(sid)

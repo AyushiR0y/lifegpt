@@ -114,6 +114,20 @@ class DocumentParser:
     MAX_IMAGES = 20
     MAX_IMAGE_DIMENSION = 1024
 
+    @staticmethod
+    def _is_truthy(value: str) -> bool:
+        return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+    def _should_extract_pdf_images(self) -> bool:
+        override = os.getenv("SUMMARIZATION_EXTRACT_PDF_IMAGES")
+        if override is not None:
+            return self._is_truthy(override)
+
+        # On hosted/free environments, skip heavy PDF->image conversion by default.
+        on_render = self._is_truthy(os.getenv("RENDER", ""))
+        has_hosted_port = bool(os.getenv("PORT"))
+        return not (on_render or has_hosted_port)
+
     _URL_RE = re.compile(r"https?://[^\s<>\"{}|\\^`\[\]]+|www\.[^\s<>\"{}|\\^`\[\]]+")
 
     _DATE_PATTERNS = [
@@ -220,7 +234,7 @@ class DocumentParser:
                 pages[i] = pt
                 all_text.append(pt)
 
-        images = self._pdf_page_images(data, total)
+        images = self._pdf_page_images(data, total) if self._should_extract_pdf_images() else []
         return DocumentContent(
             text="\n\n".join(all_text), total_pages=total, page_contents=pages,
             metadata={"filename": filename, "page_count": total,

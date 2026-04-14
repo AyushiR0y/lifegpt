@@ -103,6 +103,12 @@ async def root():
         return HTMLResponse(content="<h1>index.html not found. Please ensure it's in the same directory as app.py</h1>")
 
 
+@app.head("/")
+async def root_head():
+    # Render and proxies often send HEAD probes to check service health.
+    return HTMLResponse(content="", status_code=200)
+
+
 @app.get("/logo.jpg")
 async def logo():
     logo_path = os.path.join(BASE_DIR, "logo.jpg")

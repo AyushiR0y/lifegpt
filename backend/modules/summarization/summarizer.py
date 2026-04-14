@@ -14,8 +14,12 @@ Special modes (auto-detected from metadata/file_type):
 
 from typing import Literal, Any, List, Optional
 from dataclasses import dataclass
+import os
 
 from openai import AzureOpenAI
+
+
+MAX_SUMMARY_TOKENS = int(os.getenv("SUMMARIZATION_MAX_TOKENS", "1800"))
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +113,7 @@ class DocumentSummarizer:
             model=self.deployment_name,
             messages=messages,
             temperature=0.1 if is_email else 0.3,
-            max_tokens=4000,
+            max_tokens=MAX_SUMMARY_TOKENS,
             top_p=0.85,
         )
 
