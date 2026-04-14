@@ -7,6 +7,15 @@ from typing import Annotated, Dict, Literal, Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from openai import AzureOpenAI
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    RateLimitError,
+)
 from pydantic import BaseModel
 
 from .document_parser import DocumentParser
@@ -19,8 +28,12 @@ AZURE_ENDPOINT = os.getenv(
     "https://balic-gpt-contentgenerationnew.openai.azure.com",
 )
 AZURE_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
-AZURE_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
-AZURE_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
+AZURE_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+AZURE_DEPLOYMENT = (
+    os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+    or os.getenv("AZURE_OPENAI_DEPLOYMENT")
+    or "gpt-4o"
+)
 
 SUPPORTED_EXTENSIONS = {"txt", "csv", "xlsx", "xls", "pdf", "docx", "pptx", "msg"}
 MAX_SUMMARIZATION_FILE_MB = int(os.getenv("SUMMARIZATION_MAX_FILE_MB", "25"))
@@ -35,6 +48,22 @@ def _make_azure_client() -> AzureOpenAI:
         azure_endpoint=AZURE_ENDPOINT,
         api_key=AZURE_API_KEY,
     )
+
+
+def _validate_llm_configuration() -> None:
+    missing = []
+    if not AZURE_API_KEY:
+        missing.append("AZURE_OPENAI_API_KEY")
+    if not AZURE_ENDPOINT:
+        missing.append("AZURE_OPENAI_ENDPOINT")
+    if not AZURE_DEPLOYMENT:
+        missing.append("AZURE_OPENAI_DEPLOYMENT_NAME (or AZURE_OPENAI_DEPLOYMENT)")
+
+    if missing:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing Azure OpenAI configuration: {', '.join(missing)}",
+        )
 
 
 _parser = DocumentParser()
@@ -77,6 +106,8 @@ async def summarize_document(
         Form(description="Page/slide range, e.g. '1-5' or '1,3,5'. Leave empty for all."),
     ] = None,
 ):
+    _validate_llm_configuration()
+
     filename = file.filename or "upload"
     ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
     if ext not in SUPPORTED_EXTENSIONS:
@@ -124,6 +155,25 @@ async def summarize_document(
             metadata=doc.metadata,
             images=selected_images,
         )
+    except BadRequestError as exc:
+        raise HTTPException(status_code=400, detail=f"Azure request rejected: {exc}")
+    except AuthenticationError as exc:
+        raise HTTPException(status_code=401, detail=f"Azure authentication failed: {exc}")
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Azure deployment not found. Check AZURE_OPENAI_DEPLOYMENT_NAME "
+                f"(current: '{AZURE_DEPLOYMENT}'). Error: {exc}"
+            ),
+        )
+    except RateLimitError as exc:
+        raise HTTPException(status_code=429, detail=f"Azure rate limit exceeded: {exc}")
+    except (APITimeoutError, APIConnectionError) as exc:
+        raise HTTPException(status_code=503, detail=f"Azure service unavailable: {exc}")
+    except APIStatusError as exc:
+        status = exc.status_code or 502
+        raise HTTPException(status_code=status, detail=f"Azure API error: {exc}")
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"LLM error: {exc}")
 

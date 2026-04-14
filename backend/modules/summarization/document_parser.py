@@ -14,6 +14,8 @@ import os
 import re
 import base64
 import tempfile
+import zipfile
+from html import unescape
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 
@@ -253,9 +255,84 @@ class DocumentParser:
     # DOCX
     # ------------------------------------------------------------------
 
+    def _build_text_pages(self, text: str) -> Dict[int, str]:
+        estimated_pages = max(1, len(text.split()) // 500)
+        chars_per_page = len(text) // estimated_pages if estimated_pages else len(text)
+        return {i + 1: text[i * chars_per_page : (i + 1) * chars_per_page] for i in range(estimated_pages)}
+
+    def _extract_text_from_document_xml(self, data: bytes) -> str:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            xml_bytes = archive.read("word/document.xml")
+        xml_text = xml_bytes.decode("utf-8", errors="ignore")
+        # Convert paragraph boundaries before stripping all tags.
+        xml_text = re.sub(r"</w:p>", "\n", xml_text)
+        xml_text = re.sub(r"<[^>]+>", "", xml_text)
+        return unescape(xml_text).strip()
+
+    def _best_effort_text_from_non_docx(self, data: bytes) -> str:
+        for encoding in ("utf-8", "latin-1"):
+            try:
+                decoded = data.decode(encoding)
+                cleaned = re.sub(r"\s+", " ", decoded).strip()
+                if cleaned:
+                    return cleaned
+            except Exception:
+                continue
+        return ""
+
     def _parse_docx(self, data: bytes, filename: str) -> DocumentContent:
         from docx import Document
-        doc = Document(io.BytesIO(data))
+
+        try:
+            doc = Document(io.BytesIO(data))
+        except Exception as exc:
+            # Some uploads are mis-labeled as .docx even though they are plain text.
+            if not zipfile.is_zipfile(io.BytesIO(data)):
+                fallback_text = self._best_effort_text_from_non_docx(data)
+                if fallback_text and len(fallback_text) > 40:
+                    pages = self._build_text_pages(fallback_text)
+                    return DocumentContent(
+                        text=fallback_text,
+                        total_pages=len(pages),
+                        page_contents=pages,
+                        metadata={
+                            "filename": filename,
+                            "parser_note": "Used text fallback because file content is not a valid DOCX archive.",
+                        },
+                        file_type="docx",
+                        images=[],
+                    )
+                raise ValueError(
+                    "Invalid DOCX file. The file content is not a DOCX archive. "
+                    "Please open it in Word/Google Docs and re-save as .docx."
+                ) from exc
+
+            # If the archive is valid but python-docx parsing fails, fallback to raw XML text extraction.
+            try:
+                fallback_text = self._extract_text_from_document_xml(data)
+            except Exception:
+                raise ValueError(
+                    "Corrupted DOCX archive (ZIP central directory issue). "
+                    "Please re-download or re-save the file and upload again."
+                ) from exc
+
+            if not fallback_text:
+                raise ValueError(
+                    "DOCX is readable but no text content was found in word/document.xml."
+                ) from exc
+
+            pages = self._build_text_pages(fallback_text)
+            return DocumentContent(
+                text=fallback_text,
+                total_pages=len(pages),
+                page_contents=pages,
+                metadata={
+                    "filename": filename,
+                    "parser_note": "Used XML fallback because python-docx could not parse this file.",
+                },
+                file_type="docx",
+                images=[],
+            )
 
         paras = [p.text for p in doc.paragraphs if p.text.strip()]
         tables = [
@@ -263,9 +340,7 @@ class DocumentParser:
             for t in doc.tables
         ]
         text = "\n\n".join(paras + tables)
-        ep = max(1, len(text.split()) // 500)
-        cpp = len(text) // ep if ep else len(text)
-        pages = {i + 1: text[i * cpp : (i + 1) * cpp] for i in range(ep)}
+        pages = self._build_text_pages(text)
 
         images, count = [], 0
         try:
@@ -290,7 +365,7 @@ class DocumentParser:
             pass
 
         return DocumentContent(
-            text=text, total_pages=ep, page_contents=pages,
+            text=text, total_pages=len(pages), page_contents=pages,
             metadata={"filename": filename, "image_count": len(images),
                       "has_images": bool(images)},
             file_type="docx", images=images,
