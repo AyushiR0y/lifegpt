@@ -85,6 +85,14 @@ def get_translate_form_max_file_mb() -> int:
     return _get_env_int("TRANSLATE_FORM_MAX_FILE_MB", 50)
 
 
+def get_multidoc_excel_max_sheets() -> int:
+    return _get_env_int("MULTIDOC_EXCEL_MAX_SHEETS", 3)
+
+
+def get_multidoc_excel_max_rows() -> int:
+    return _get_env_int("MULTIDOC_EXCEL_MAX_ROWS", 60)
+
+
 def load_env_file(env_path: Optional[str] = None) -> None:
     """Load key/value pairs from .env into process environment without overriding existing vars."""
     if env_path is None:
@@ -177,32 +185,45 @@ def decode_data_url(data_url: str) -> tuple[bytes, str]:
 def extract_spreadsheet_sections(file_bytes: bytes, file_name: str) -> List[Dict]:
     sections: List[Dict] = []
     lower_name = file_name.lower()
+    max_sheets = get_multidoc_excel_max_sheets()
+    max_rows = get_multidoc_excel_max_rows()
 
     if lower_name.endswith((".xlsx", ".xlsm")):
         workbook = load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
-        for sheet in workbook.worksheets:
+        for sheet in workbook.worksheets[:max_sheets]:
             row_lines: List[str] = []
             for row_index, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                if row_index > max_rows:
+                    row_lines.append(f"... truncated after {max_rows} rows ...")
+                    break
                 values = [str(cell).strip() for cell in row if cell not in (None, "")]
                 if not values:
                     continue
                 row_lines.append(f"Row {row_index}: " + " | ".join(values))
             if row_lines:
-                sections.append({"label": f"Sheet {sheet.title}", "text": "\n".join(row_lines)})
+                label = f"Sheet {sheet.title}"
+                if len(row_lines) > max_rows:
+                    label += " (truncated)"
+                sections.append({"label": label, "text": "\n".join(row_lines)})
         return sections
 
     if lower_name.endswith(".xls"):
         workbook = xlrd.open_workbook(file_contents=file_bytes)
-        for sheet in workbook.sheets():
+        for sheet in workbook.sheets()[:max_sheets]:
             row_lines = []
-            for row_index in range(sheet.nrows):
+            for row_index in range(min(sheet.nrows, max_rows)):
                 values = [str(sheet.cell_value(row_index, col_index)).strip() for col_index in range(sheet.ncols)]
                 values = [value for value in values if value and value.lower() != "nan"]
                 if not values:
                     continue
                 row_lines.append(f"Row {row_index + 1}: " + " | ".join(values))
+            if sheet.nrows > max_rows:
+                row_lines.append(f"... truncated after {max_rows} rows ...")
             if row_lines:
-                sections.append({"label": f"Sheet {sheet.name}", "text": "\n".join(row_lines)})
+                label = f"Sheet {sheet.name}"
+                if sheet.nrows > max_rows:
+                    label += " (truncated)"
+                sections.append({"label": label, "text": "\n".join(row_lines)})
 
     return sections
 
