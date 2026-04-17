@@ -182,6 +182,63 @@ def decode_data_url(data_url: str) -> tuple[bytes, str]:
     return base64.b64decode(encoded), mime_type
 
 
+def select_chunks_for_context(candidate_chunks: List[Dict], mode: str, max_sections: int) -> List[Dict]:
+    if not candidate_chunks:
+        return []
+
+    if len(candidate_chunks) <= max_sections:
+        return candidate_chunks
+
+    if mode != "numbers":
+        return candidate_chunks[:max_sections]
+
+    # For numbers mode, balance relevance with full-document coverage.
+    sorted_by_score = sorted(
+        candidate_chunks,
+        key=lambda item: (-item.get("score", 0), item.get("doc_index", 0), item.get("chunk_index", 0)),
+    )
+
+    top_count = max(3, int(max_sections * 0.6))
+    top_count = min(top_count, max_sections, len(sorted_by_score))
+    selected = list(sorted_by_score[:top_count])
+    selected_keys = {
+        (item.get("doc_index", 0), item.get("chunk_index", 0), item.get("label", ""))
+        for item in selected
+    }
+
+    # Fill remaining slots using even spread across remaining chunks.
+    remaining_pool = [
+        chunk for chunk in candidate_chunks
+        if (chunk.get("doc_index", 0), chunk.get("chunk_index", 0), chunk.get("label", "")) not in selected_keys
+    ]
+    remaining_slots = max_sections - len(selected)
+
+    if remaining_slots > 0 and remaining_pool:
+        if remaining_slots >= len(remaining_pool):
+            selected.extend(remaining_pool)
+        else:
+            step = max(1, len(remaining_pool) // remaining_slots)
+            spread = []
+            idx = 0
+            while len(spread) < remaining_slots and idx < len(remaining_pool):
+                spread.append(remaining_pool[idx])
+                idx += step
+            if len(spread) < remaining_slots:
+                for chunk in remaining_pool:
+                    key = (chunk.get("doc_index", 0), chunk.get("chunk_index", 0), chunk.get("label", ""))
+                    if key not in {
+                        (item.get("doc_index", 0), item.get("chunk_index", 0), item.get("label", ""))
+                        for item in spread
+                    }:
+                        spread.append(chunk)
+                    if len(spread) >= remaining_slots:
+                        break
+            selected.extend(spread[:remaining_slots])
+
+    selected.sort(key=lambda item: (item.get("doc_index", 0), item.get("chunk_index", 0)))
+    return selected[:max_sections]
+
+
 def extract_spreadsheet_sections(file_bytes: bytes, file_name: str) -> List[Dict]:
     sections: List[Dict] = []
     lower_name = file_name.lower()
@@ -228,7 +285,7 @@ def extract_spreadsheet_sections(file_bytes: bytes, file_name: str) -> List[Dict
     return sections
 
 
-def extract_pdf_sections(pdf_bytes: bytes, max_pages: int = 6) -> List[Dict]:
+def extract_pdf_sections(pdf_bytes: bytes, max_pages: int = 6, include_ocr: bool = False) -> List[Dict]:
     sections: List[Dict] = []
 
     try:
@@ -240,7 +297,8 @@ def extract_pdf_sections(pdf_bytes: bytes, max_pages: int = 6) -> List[Dict]:
     except Exception:
         sections = []
 
-    if sections:
+    has_strong_text = sum(len((section.get("text") or "").strip()) for section in sections) >= 300
+    if sections and not include_ocr:
         return sections
 
     try:
@@ -262,6 +320,10 @@ def extract_pdf_sections(pdf_bytes: bytes, max_pages: int = 6) -> List[Dict]:
             except Exception:
                 pass
 
+    if sections and not has_strong_text:
+        return sections
+
+    # If we already had strong digital text and OCR is included, keep both so numbers mode can catch missed fields.
     return sections
 
 
@@ -289,42 +351,77 @@ def extract_image_sections(image_bytes: bytes) -> List[Dict]:
 def build_attachment_context(attachments: List[Dict], query_text: str = "", mode: str = "generic") -> str:
     attachment_blocks: List[str] = []
     query_tokens = tokenize_for_retrieval(query_text)
-    max_sections = 6 if mode in {"multidoc", "compare"} else 3
-    max_chunk_chars = 1400 if mode in {"multidoc", "compare"} else 1000
+    if mode == "numbers":
+        max_sections = 14
+        max_chunk_chars = 1400
+    else:
+        max_sections = 6 if mode in {"multidoc", "compare"} else 3
+        max_chunk_chars = 1400 if mode in {"multidoc", "compare"} else 1000
 
-    for attachment in attachments or []:
+    for doc_index, attachment in enumerate(attachments or [], start=1):
         if not isinstance(attachment, dict):
             continue
 
         name = str(attachment.get("name") or "attachment")
-        content = attachment.get("content") or attachment.get("raw") or ""
-        if not isinstance(content, str) or not content.startswith("data:"):
+
+        content_obj = attachment.get("content")
+        raw_content = ""
+        is_base64 = False
+        if isinstance(content_obj, dict):
+            raw_content = content_obj.get("raw") or ""
+            is_base64 = bool(content_obj.get("isBase64"))
+        else:
+            raw_content = attachment.get("raw") or ""
+
+        if not isinstance(raw_content, str):
             continue
 
         mime_type = str(attachment.get("type") or "").lower()
-        file_bytes, data_mime_type = decode_data_url(content)
-        mime_type = mime_type or data_mime_type
         lower_name = name.lower()
 
-        if mime_type.startswith("image/") or lower_name.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")):
-            sections = extract_image_sections(file_bytes)
-        elif mime_type == "application/pdf" or lower_name.endswith(".pdf"):
-            sections = extract_pdf_sections(file_bytes)
-        elif lower_name.endswith((".xlsx", ".xlsm", ".xls")) or mime_type in {
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.ms-excel",
-        }:
-            sections = extract_spreadsheet_sections(file_bytes, name)
+        sections: List[Dict] = []
+
+        if is_base64 and raw_content.startswith("data:"):
+            try:
+                file_bytes, data_mime_type = decode_data_url(raw_content)
+            except Exception:
+                continue
+            mime_type = mime_type or data_mime_type
+
+            if mime_type.startswith("image/") or lower_name.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")):
+                sections = extract_image_sections(file_bytes)
+            elif mime_type == "application/pdf" or lower_name.endswith(".pdf"):
+                sections = extract_pdf_sections(file_bytes, include_ocr=(mode == "numbers"))
+            elif lower_name.endswith((".xlsx", ".xlsm", ".xls")) or mime_type in {
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-excel",
+            }:
+                sections = extract_spreadsheet_sections(file_bytes, name)
+            elif lower_name.endswith((".txt", ".csv")) or mime_type.startswith("text/"):
+                text_content = file_bytes.decode("utf-8", errors="ignore").strip()
+                if text_content:
+                    sections = [{"label": "Text Content", "text": text_content}]
         else:
+            text_content = raw_content.strip()
+            if text_content:
+                sections = [{"label": "Text Content", "text": text_content}]
+
+        if not sections:
             continue
 
         candidate_chunks: List[Dict] = []
         for section in sections:
-            for chunk_index, chunk_text in enumerate(chunk_text_for_retrieval(section["text"], max_chars=max_chunk_chars), start=1):
+            section_text = section.get("text", "")
+            if not section_text:
+                continue
+            chunk_list = chunk_text_for_retrieval(section_text, max_chars=max_chunk_chars)
+            for chunk_index, chunk_text in enumerate(chunk_list, start=1):
                 candidate_chunks.append({
-                    "label": f"{section['label']} • Chunk {chunk_index}" if len(section["text"]) > max_chunk_chars else section["label"],
+                    "label": f"{section.get('label', 'Section')} • Chunk {chunk_index}" if len(section_text) > max_chunk_chars else section.get("label", "Section"),
                     "text": chunk_text,
                     "score": score_chunk(query_tokens, chunk_text),
+                    "doc_index": doc_index,
+                    "chunk_index": chunk_index,
                 })
 
         if not candidate_chunks:
@@ -332,7 +429,8 @@ def build_attachment_context(attachments: List[Dict], query_text: str = "", mode
 
         if query_tokens:
             candidate_chunks.sort(key=lambda item: (-item["score"], len(item["text"])))
-        selected_chunks = candidate_chunks[:max_sections]
+
+        selected_chunks = select_chunks_for_context(candidate_chunks, mode=mode, max_sections=max_sections)
 
         formatted_chunks = []
         for chunk in selected_chunks:

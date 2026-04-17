@@ -54,6 +54,65 @@
     return (plainMatch && plainMatch[1]) || fallback;
   }
 
+  function isLikelyMarkdown(text) {
+    return /(^|\n)\s*(#{1,6}\s|[-*+]\s|\d+[.)]\s|>\s|```|\|.+\|)/m.test(String(text || ""));
+  }
+
+  function toBulletListFromSentences(text) {
+    const sentences = String(text || "")
+      .split(/(?<=[.!?])\s+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (sentences.length < 3) return null;
+    return sentences.map((item) => `- ${item}`).join("\n");
+  }
+
+  function formatSummaryForChat(summaryText) {
+    const raw = String(summaryText || "").replace(/\r\n/g, "\n").trim();
+    if (!raw) return "### Document Summary\n\n- No summary content was returned.";
+
+    if (isLikelyMarkdown(raw)) {
+      return `### Document Summary\n\n${raw}`;
+    }
+
+    const lines = raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const formatted = lines.map((line) => {
+      const bulletMatch = line.match(/^[-*\u2022]\s+(.+)$/);
+      if (bulletMatch) return `- ${bulletMatch[1].trim()}`;
+
+      const numberedMatch = line.match(/^\d+[.)]\s+(.+)$/);
+      if (numberedMatch) return `- ${numberedMatch[1].trim()}`;
+
+      const keyValueMatch = line.match(/^([A-Za-z][A-Za-z\s/&()'-]{2,50}):\s*(.+)$/);
+      if (keyValueMatch) {
+        const label = keyValueMatch[1].trim();
+        const value = keyValueMatch[2].trim();
+        return `- **${label}:** ${value}`;
+      }
+
+      return line;
+    });
+
+    const hasBullets = formatted.some((line) => line.startsWith("- "));
+    let body = "";
+
+    if (hasBullets) {
+      body = formatted
+        .map((line) => (line.startsWith("- ") ? line : `- ${line}`))
+        .join("\n");
+    } else if (formatted.length === 1) {
+      body = toBulletListFromSentences(formatted[0]) || formatted[0];
+    } else {
+      body = formatted.map((line) => `- ${line}`).join("\n");
+    }
+
+    return `### Document Summary\n\n${body}`;
+  }
+
   async function callSummarizationApi(messages, attachments, summaryDepth) {
     if (!attachments || attachments.length === 0) {
       throw new Error("Upload a document to use Summarise mode.");
@@ -89,7 +148,11 @@
       `summary_${data.task_id || "download"}.docx`
     );
 
-    return `${data.summary}\n\n<a class="download-link" href="${objectUrl}" download="${filename}"><i class="fa-solid fa-download"></i> Download DOCX</a>`;
+    window.LIFEGPT_LAST_RESOLVED_MODE = "summarise";
+    window.LIFEGPT_LAST_REQUESTED_MODES = ["summarise"];
+
+    const formattedSummary = formatSummaryForChat(data.summary);
+    return `${formattedSummary}\n\n<a class="download-link" href="${objectUrl}" download="${filename}"><i class="fa-solid fa-download"></i> Download DOCX</a>`;
   }
 
   async function callComparisonApi(messages, attachments, summaryDepth) {
@@ -101,12 +164,21 @@
       ? String(messages[messages.length - 1].content || "")
       : "Compare the uploaded documents.";
 
+    const comparisonFormatHint = [
+      "",
+      "Formatting requirements:",
+      "- Use clear Markdown headings and bullet points.",
+      "- Add a 'Differences' section with a Markdown table.",
+      "- The table must contain: Aspect | Document 1 | Document 2 | Observation.",
+      "- If there are more than two documents, add Document 3, Document 4, etc. columns.",
+    ].join("\n");
+
     const formData = new FormData();
     attachments.slice(0, 5).forEach((item) => {
       formData.append("files", attachmentToBlob(item), item.name || "upload.txt");
     });
     formData.append("summary_type", mapSummaryType(summaryDepth));
-    formData.append("prompt", userMessage);
+    formData.append("prompt", `${userMessage}${comparisonFormatHint}`);
 
     const resp = await fetch(resolveBackendUrl("/api/comparison/compare"), {
       method: "POST",
@@ -119,6 +191,8 @@
     }
 
     const data = await resp.json();
+    window.LIFEGPT_LAST_RESOLVED_MODE = "compare";
+    window.LIFEGPT_LAST_REQUESTED_MODES = ["compare"];
     return data.comparison || "No comparison result returned.";
   }
 
@@ -143,6 +217,8 @@
     }
 
     const data = await resp.json();
+    window.LIFEGPT_LAST_RESOLVED_MODE = data.resolved_mode || mode;
+    window.LIFEGPT_LAST_REQUESTED_MODES = Array.isArray(data.requested_modes) ? data.requested_modes : [window.LIFEGPT_LAST_RESOLVED_MODE];
     return data.content?.map((b) => b.text || "").join("") || "";
   }
 

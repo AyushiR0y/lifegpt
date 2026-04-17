@@ -38,7 +38,7 @@ const KEYWORD_MAP = [
   { mode: "summarise", keywords: ["summarise", "summarize", "summary", "brief", "overview", "tldr", "tl;dr"] },
   { mode: "multidoc", keywords: ["multiple documents", "multi doc", "across documents", "from all documents"] },
   { mode: "compare", keywords: ["compare", "comparison", "versus", "vs ", "difference", "contrast"] },
-  { mode: "numbers", keywords: ["numbers", "figures", "statistics", "amounts", "percentage", "inr", "rupee", "calculate"] },
+  { mode: "numbers", keywords: ["numbers", "numeric", "financial result", "financial results", "figures", "statistics", "amounts", "percentage", "inr", "rupee", "revenue", "profit", "loss", "p&l", "balance sheet", "income statement", "calculate"] },
   { mode: "translate", keywords: ["translate", "translation", "hindi", "marathi", "french", "spanish", "german"] },
 ];
 
@@ -107,6 +107,88 @@ function sanitizeHtml(html) {
 function renderMarkdownSafe(markdownText) {
   const html = window.marked ? marked.parse(String(markdownText || "")) : escHtml(String(markdownText || ""));
   return sanitizeHtml(html);
+}
+
+function isStructuredAssistantText(text) {
+  const raw = String(text || "");
+  return /(^|\n)\s*(#{1,6}\s|[-*+]\s|\d+[.)]\s|>\s|```|\|.+\|)|<\/?[a-z][\s\S]*?>/im.test(raw);
+}
+
+function fallbackFormatAssistantText(text) {
+  const raw = String(text || "").replace(/\r\n/g, "\n").trim();
+  if (!raw) return "### Response\n\n- No content returned.";
+  if (isStructuredAssistantText(raw)) return raw;
+
+  const lines = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const keyValues = [];
+  const bulletItems = [];
+  const paragraphs = [];
+
+  lines.forEach((line) => {
+    const kv = line.match(/^([A-Za-z][A-Za-z\s/&()'-]{2,60}):\s*(.+)$/);
+    if (kv) {
+      keyValues.push({ key: kv[1].trim(), value: kv[2].trim() });
+      return;
+    }
+
+    const bullet = line.match(/^[-*\u2022]\s+(.+)$/);
+    if (bullet) {
+      bulletItems.push(bullet[1].trim());
+      return;
+    }
+
+    paragraphs.push(line);
+  });
+
+  if (!keyValues.length && !bulletItems.length && paragraphs.length <= 1) {
+    const single = paragraphs[0] || raw;
+    const sentences = single
+      .split(/(?<=[.!?])\s+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (sentences.length >= 3) bulletItems.push(...sentences);
+  }
+
+  const out = ["### Response", ""];
+
+  if (keyValues.length) {
+    out.push("#### Highlights", "");
+    keyValues.forEach((item) => out.push(`- **${item.key}:** ${item.value}`));
+    out.push("");
+  }
+
+  if (bulletItems.length) {
+    out.push("#### Key Points", "");
+    bulletItems.forEach((item) => out.push(`- ${item}`));
+    out.push("");
+  }
+
+  const remainingParagraphs = keyValues.length
+    ? paragraphs.filter((line) => !keyValues.some((item) => `${item.key}: ${item.value}` === line))
+    : paragraphs;
+
+  if (remainingParagraphs.length) {
+    if (keyValues.length || bulletItems.length) out.push("---", "");
+    out.push("#### Details", "");
+    remainingParagraphs.forEach((line) => out.push(`- ${line}`));
+    out.push("");
+  }
+
+  return out.join("\n").trim();
+}
+
+function renderAssistantMarkdownSafe(text) {
+  const raw = String(text || "").trim();
+  // Trust model formatting when content is already structured; fallback only for short plain text.
+  if (isStructuredAssistantText(raw) || raw.length > 220 || raw.includes("\n")) {
+    return renderMarkdownSafe(raw);
+  }
+  const formatted = fallbackFormatAssistantText(raw);
+  return renderMarkdownSafe(formatted);
 }
 
 function getUserIdFromContext() {
@@ -480,7 +562,7 @@ function readFileContent(file) {
       file.type === "application/pdf" ||
       nameLower.endsWith(".pdf") ||
       String(file.type || "").startsWith("image/") ||
-      /\.(xlsx?|xlsm|png|jpe?g|webp|gif|bmp|tif|tiff)$/.test(nameLower);
+      /\.(xlsx?|xlsm|docx?|pptx|msg|png|jpe?g|webp|gif|bmp|tif|tiff)$/.test(nameLower);
 
     if (isBinary) {
       reader.onload = (e) => resolve({ raw: e.target.result, isBase64: true });
@@ -533,6 +615,7 @@ async function runTranslation() {
 
   ensureCurrentChat();
   const thisChatId = currentChatId;
+  const modeAtStart = currentMode;
   const langSelect = document.getElementById("translate-lang");
   const langName = langSelect.options[langSelect.selectedIndex].text;
   const langCode = langSelect.value;
@@ -558,7 +641,7 @@ async function runTranslation() {
   });
   updateChatTitle(thisChatId, `Translation: ${translateFile.name}`);
 
-  const aiMsgEl = addAiMessageForChat(thisChatId, "", currentMode);
+  const aiMsgEl = addAiMessageForChat(thisChatId, "", modeAtStart);
   const bubbleEl = aiMsgEl ? aiMsgEl.querySelector(".bubble") : null;
   if (bubbleEl) {
     bubbleEl.classList.add("streaming-cursor");
@@ -582,16 +665,24 @@ async function runTranslation() {
     const translatedBlob = await resp.blob();
     const url = URL.createObjectURL(translatedBlob);
     const filename = `${translateFile.name.replace(/\.[^.]+$/, "")}_${langCode}.pdf`;
+    let dataUrl = "";
+    try {
+      dataUrl = await blobToDataUrl(translatedBlob);
+    } catch {
+      // Keep object URL fallback if data URL conversion fails for large blobs.
+      dataUrl = "";
+    }
 
     const resultMsg = {
       role: "assistant",
-      mode: currentMode,
+      mode: modeAtStart,
       kind: "translation_result",
       content: `Translation complete! Your file has been translated to **${langName}**.`,
       download: {
         filename,
         label: "Download Translated File",
         url,
+        dataUrl,
         mimeType: translatedBlob.type || "application/pdf",
       },
     };
@@ -602,11 +693,21 @@ async function runTranslation() {
     if (bubbleEl) {
       bubbleEl.classList.remove("streaming-cursor");
       bubbleEl.innerHTML = sanitizeHtml(renderMarkdownSafe(resultMsg.content) + downloadHtml(resultMsg.download));
+    } else if (thisChatId === currentChatId) {
+      renderChatMessages();
     }
   } catch (e) {
     if (bubbleEl) {
       bubbleEl.classList.remove("streaming-cursor");
       bubbleEl.innerHTML = `<span style="color:#ef4444"><i class="fa-solid fa-triangle-exclamation"></i> Translation failed: ${escHtml(e.message)}</span>`;
+    } else if (thisChatId === currentChatId) {
+      chats[thisChatId].messages.push({
+        role: "assistant",
+        mode: modeAtStart,
+        content: `Translation failed: ${String(e.message || e)}`,
+      });
+      saveChatStorage();
+      renderChatMessages();
     }
   } finally {
     streamingChats.delete(thisChatId);
@@ -636,6 +737,15 @@ function autoResize(el) {
   el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
 }
 
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("Could not read translated file."));
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function sendMessage() {
   if (streamingChats.has(currentChatId)) return;
 
@@ -643,7 +753,7 @@ async function sendMessage() {
   const text = String(ta.value || "").trim();
   if (!text) return;
 
-  const detected = currentMode === "generic" ? detectMode(text) : null;
+  const detected = detectMode(text);
   if (detected && detected !== currentMode) setMode(detected);
 
   ta.value = "";
@@ -697,12 +807,16 @@ async function processMessage(text, summaryDepth = null) {
   if (bubbleEl) bubbleEl.classList.add("streaming-cursor");
 
   try {
-    const fullResponse = await callAPIStream(
+    window.LIFEGPT_LAST_RESOLVED_MODE = modeAtSend;
+    window.LIFEGPT_LAST_REQUESTED_MODES = [modeAtSend];
+
+    const streamCaller = (typeof window.callAPIStream === "function") ? window.callAPIStream : callAPIStream;
+    const fullResponse = await streamCaller(
       apiMessages,
       (chunk) => {
         if (bubbleEl) {
           bubbleEl.classList.remove("streaming-cursor");
-          bubbleEl.innerHTML = renderMarkdownSafe(chunk);
+          bubbleEl.innerHTML = renderAssistantMarkdownSafe(chunk);
         }
         if (currentChatId === chatId) scrollBottom();
       },
@@ -712,16 +826,19 @@ async function processMessage(text, summaryDepth = null) {
       chatId
     );
 
+    const resolvedMode = (typeof window.LIFEGPT_LAST_RESOLVED_MODE === "string" && window.LIFEGPT_LAST_RESOLVED_MODE) || modeAtSend;
+    applyResolvedModeToAiMessage(aiMsgEl, resolvedMode);
+
     if (bubbleEl) {
       bubbleEl.classList.remove("streaming-cursor");
-      bubbleEl.innerHTML = renderMarkdownSafe(fullResponse);
+      bubbleEl.innerHTML = renderAssistantMarkdownSafe(fullResponse);
     }
     if (copyBtn) {
       copyBtn.dataset.copyText = fullResponse;
       copyBtn.disabled = false;
     }
 
-    chat.messages.push({ role: "assistant", content: fullResponse, mode: modeAtSend });
+    chat.messages.push({ role: "assistant", content: fullResponse, mode: resolvedMode });
     saveChatStorage();
     if (window.hljs) hljs.highlightAll();
   } catch (e) {
@@ -872,7 +989,7 @@ function addUserMessageWithFiles(text, files, chatId, messageIndex) {
   el.innerHTML = `
     <div class="avatar user"><i class="fa-solid fa-user"></i></div>
     <div>
-      <div class="bubble">${attachHtml}${escHtml(text)}</div>
+      <div class="bubble">${attachHtml}${renderMarkdownSafe(text)}</div>
       <div class="msg-meta">${formatTime()}</div>
       <div class="msg-actions">
         <button class="msg-action-btn" type="button" onclick="beginEditMessage('${chatId || currentChatId}', ${typeof messageIndex === "number" ? messageIndex : -1})">
@@ -896,7 +1013,7 @@ function addAiMessageForChat(chatId, text, mode) {
   el.innerHTML = `
     <div class="avatar ai"><i class="fa-solid ${info.icon}"></i></div>
     <div>
-      <div class="bubble">${text ? renderMarkdownSafe(text) : '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>'}</div>
+      <div class="bubble">${text ? renderAssistantMarkdownSafe(text) : '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>'}</div>
       <div class="msg-meta"><span class="mode-tag">${info.label}</span> ${formatTime()}</div>
       <div class="msg-actions">
         <button class="msg-action-btn copy-btn" type="button" ${text ? "" : "disabled"} data-copy-text="${escHtml(text || "")}" onclick="copyMessageText(this.dataset.copyText, this)">
@@ -912,6 +1029,17 @@ function addAiMessageForChat(chatId, text, mode) {
     scrollBottom();
   }
   return el;
+}
+
+function applyResolvedModeToAiMessage(aiMsgEl, mode) {
+  if (!aiMsgEl || !mode || !MODES[mode]) return;
+  const info = MODES[mode];
+
+  const avatarIcon = aiMsgEl.querySelector(".avatar.ai i");
+  if (avatarIcon) avatarIcon.className = `fa-solid ${info.icon}`;
+
+  const modeTag = aiMsgEl.querySelector(".mode-tag");
+  if (modeTag) modeTag.textContent = info.label;
 }
 
 function renderChatMessages() {
@@ -950,7 +1078,7 @@ function renderChatMessages() {
     const ai = addAiMessageForChat(currentChatId, msg.content || "", msg.mode || chat.mode);
     if (msg.download && ai) {
       const bubble = ai.querySelector(".bubble");
-      if (bubble) bubble.innerHTML = sanitizeHtml(renderMarkdownSafe(msg.content || "") + downloadHtml(msg.download));
+      if (bubble) bubble.innerHTML = sanitizeHtml(renderAssistantMarkdownSafe(msg.content || "") + downloadHtml(msg.download));
     }
   });
 

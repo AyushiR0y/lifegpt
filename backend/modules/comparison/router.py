@@ -92,6 +92,11 @@ async def compare_documents(
         "3. Differences\n"
         "4. Risk / Conflict Areas\n"
         "5. Final Recommendation\n\n"
+        "Formatting requirements:\n"
+        "- Use clean Markdown headings and bullet points.\n"
+        "- In section 'Differences', include at least one Markdown table.\n"
+        "- The table must include one 'Aspect' column, one column per document (Document 1, Document 2, etc.), and a final 'Observation' column.\n"
+        "- Keep entries concise and evidence-based from the provided documents only.\n\n"
         f"Comparison focus: {user_focus}\n\n"
         + "\n\n".join(compiled_context)
     )
@@ -99,7 +104,10 @@ async def compare_documents(
     system_prompt = (
         "You are a professional document comparison assistant. "
         "Only use content present in provided documents. "
-        "Do not invent facts. If details are missing, state that explicitly."
+        "Do not invent facts. If details are missing, state that explicitly. "
+        "Always return clean Markdown formatting with headings, bullets, readable spacing, "
+        "and section dividers (---) for longer responses. Bold critical labels and use aligned "
+        "Markdown tables for structured comparisons."
     )
 
     try:
